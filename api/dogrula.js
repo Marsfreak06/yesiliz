@@ -1,6 +1,8 @@
 // Görev fotoğrafını Gemini'ye gösterip görevin yapılıp yapılmadığını sorar.
 import { cevap, islem, gemini } from './_gemini.js';
-// Yedek modeller denenirken süre yetsin.export const config = { maxDuration: 60 };
+
+// Yedek modeller denenirken süre yetsin.
+export const config = { maxDuration: 60 };
 
 // Görev soruları sunucuda durur; tarayıcı yalnızca görev kimliğini gönderir.
 const GOREVLER = {
