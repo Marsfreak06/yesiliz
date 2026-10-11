@@ -1,5 +1,6 @@
 // Yaprak chatbotu: son birkaç mesajı Gemini'ye gönderip yanıt alır.
 import { cevap, islem, gemini } from './_gemini.js';
+// Yedek modeller denenirken süre yetsin.export const config = { maxDuration: 60 };
 
 const SISTEM = 'Adın Yaprak. Yeşiliz uygulamasında ortaokul ve lise öğrencilerine iklim değişikliği, çevre, geri dönüşüm, '
   + 'sürdürülebilirlik, yeşil beceriler ve TYMM OB8 Sürdürülebilirlik Okuryazarlığı hakkında yardım ediyorsun. '
