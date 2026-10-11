@@ -30,7 +30,8 @@ export async function islem(req, res, ad, limit, fn) {
   if (!govde || typeof govde !== 'object') return cevap(res, 400, { hata: 'Geçersiz istek' });
 
   // Model kapanırsa ya da yoğunsa sıradaki denenir.
-  const modeller = [process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest']
+  // gemini-3.5-flash düşük düşünme seviyesiyle fotoğrafı 2-4 saniyede inceliyor; 3.8 çok daha yavaş.
+  const modeller = [process.env.GEMINI_MODEL, 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.8-flash']
     .filter((m, i, a) => m && a.indexOf(m) === i);
   const ayar = { key, modeller };
   try {
@@ -40,21 +41,32 @@ export async function islem(req, res, ad, limit, fn) {
   }
 }
 
-// 404: model kapatılmış, 429/500/503: geçici yoğunluk. Bu durumlarda sıradaki model denenir.
-const SONRAKI_MODEL = new Set([404, 429, 500, 503]);
+// 404: model kapatılmış, 429/5xx: geçici yoğunluk. Bu durumlarda sıradaki model denenir.
+const SONRAKI_MODEL = new Set([404, 429, 500, 502, 503, 504]);
+// Vercel'in süre sınırına takılmamak için toplam bekleme süresi.
+const TOPLAM_SURE = 50_000;
 
 export async function gemini(ayar, govde) {
-  let r, sonHata = 'Gemini\'ye ulaşılamadı';
-  for (const model of ayar.modeller) {
+  const bitis = Date.now() + TOPLAM_SURE;
+  let r = null, sonHata = 'Gemini'ye ulaşılamadı';
+  for (const [sira, model] of ayar.modeller.entries()) {
+    const kalan = bitis - Date.now();
+    if (kalan < 3000) { sonHata = 'Gemini çok uzun sürdü, tekrar dene'; break; }
+    // Düşünme seviyesi her modelde desteklenmiyor; yalnızca ilk modelde gönderilir.
+    const istek = sira === 0
+      ? { ...govde, generationConfig: { ...govde.generationConfig, thinkingConfig: { thinkingLevel: 'low' } } }
+      : govde;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
     try {
       r = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': ayar.key },
-        body: JSON.stringify(govde),
+        body: JSON.stringify(istek),
+        signal: AbortSignal.timeout(Math.min(kalan, sira === 0 ? 25_000 : kalan)),
       });
     } catch {
       r = null;
+      sonHata = 'Gemini çok uzun sürdü, tekrar dene';
       continue;
     }
     if (r.ok) break;
