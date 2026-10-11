@@ -30,8 +30,8 @@ export async function islem(req, res, ad, limit, fn) {
   if (!govde || typeof govde !== 'object') return cevap(res, 400, { hata: 'Geçersiz istek' });
 
   // Model kapanırsa ya da yoğunsa sıradaki denenir.
-  // gemini-3.5-flash düşük düşünme seviyesiyle fotoğrafı 2-4 saniyede inceliyor; 3.8 çok daha yavaş.
-  const modeller = [process.env.GEMINI_MODEL, 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.8-flash']
+  // Hepsi düşük düşünme seviyesiyle fotoğrafı birkaç saniyede inceliyor; daha büyük modeller çok yavaş.
+  const modeller = [process.env.GEMINI_MODEL, 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite']
     .filter((m, i, a) => m && a.indexOf(m) === i);
   const ayar = { key, modeller };
   try {
@@ -48,31 +48,38 @@ const TOPLAM_SURE = 50_000;
 
 export async function gemini(ayar, govde) {
   const bitis = Date.now() + TOPLAM_SURE;
-  let r = null, sonHata = 'Gemini'ye ulaşılamadı';
-  for (const [sira, model] of ayar.modeller.entries()) {
-    const kalan = bitis - Date.now();
-    if (kalan < 3000) { sonHata = 'Gemini çok uzun sürdü, tekrar dene'; break; }
-    // Düşünme seviyesi her modelde desteklenmiyor; yalnızca ilk modelde gönderilir.
-    const istek = sira === 0
-      ? { ...govde, generationConfig: { ...govde.generationConfig, thinkingConfig: { thinkingLevel: 'low' } } }
-      : govde;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
-    try {
-      r = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': ayar.key },
-        body: JSON.stringify(istek),
-        signal: AbortSignal.timeout(Math.min(kalan, sira === 0 ? 25_000 : kalan)),
-      });
-    } catch {
-      r = null;
-      sonHata = 'Gemini çok uzun sürdü, tekrar dene';
-      continue;
+  let r = null, sonHata = 'Gemini\'ye ulaşılamadı';
+  for (const model of ayar.modeller) {
+    let dusunme = true;
+    for (let tekrar = 0; tekrar < 2; tekrar++) {
+      const kalan = bitis - Date.now();
+      if (kalan < 3000) { sonHata = 'Gemini çok uzun sürdü, tekrar dene'; break; }
+      const istek = dusunme
+        ? { ...govde, generationConfig: { ...govde.generationConfig, thinkingConfig: { thinkingLevel: 'low' } } }
+        : govde;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+      try {
+        r = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': ayar.key },
+          body: JSON.stringify(istek),
+          signal: AbortSignal.timeout(Math.min(kalan, 15_000)),
+        });
+      } catch {
+        r = null;
+        sonHata = 'Gemini çok uzun sürdü, tekrar dene';
+        break;
+      }
+      if (r.ok) break;
+      const hata = (await r.text()).slice(0, 500);
+      console.error('Gemini', model, r.status, hata);
+      sonHata = `Gemini hata verdi (${r.status})`;
+      // Düşünme seviyesini desteklemeyen modelde aynı istek ayarsız tekrar gönderilir.
+      if (r.status === 400 && dusunme && /thinking/i.test(hata)) { dusunme = false; continue; }
+      break;
     }
-    if (r.ok) break;
-    console.error('Gemini', model, r.status, (await r.text()).slice(0, 500));
-    sonHata = `Gemini hata verdi (${r.status})`;
-    if (!SONRAKI_MODEL.has(r.status)) break;
+    if (r && r.ok) break;
+    if (r && !SONRAKI_MODEL.has(r.status) && r.status !== 400) break;
   }
   if (!r || !r.ok) throw new Error(sonHata);
   const json = await r.json();
