@@ -1,6 +1,8 @@
 // Ortak yardımcılar: istek kontrolü, hız sınırı ve Gemini çağrısı.
 // Anahtar koda yazılmaz; Vercel'deki GEMINI_API_KEY ortam değişkeninden okunur.
 
+import { dbVar, oturumKullanici } from './_db.js';
+
 const kayitlar = new Map();
 
 export function cevap(res, kod, veri) {
@@ -23,6 +25,10 @@ export async function islem(req, res, ad, limit, fn) {
   if (req.method !== 'POST') return cevap(res, 405, { hata: 'Yalnızca POST kabul edilir' });
   const key = process.env.GEMINI_API_KEY;
   if (!key) return cevap(res, 503, { hata: 'Gemini anahtarı henüz girilmemiş' });
+  // Hesap sistemi kuruluysa Gemini yalnızca giriş yapmış kullanıcılara açılır.
+  if (dbVar() && !(await oturumKullanici(req).catch(() => null))) {
+    return cevap(res, 401, { hata: 'Önce giriş yap' });
+  }
   if (!hizSiniri(req, ad, limit)) return cevap(res, 429, { hata: 'Çok fazla istek gönderdin, biraz sonra tekrar dene' });
 
   let govde = req.body;

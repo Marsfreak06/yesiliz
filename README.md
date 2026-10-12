@@ -8,6 +8,7 @@
 - Günlük quiz, günün sözü, haftalık lig
 - Puan mağazası, rozetler, sosyal akış
 - Yaprak: iklim sorularını yanıtlayan chatbot
+- Kullanıcı adı ve şifreyle hesap; ilerleme hesapta saklanır
 
 ## Yayınlama (Vercel)
 
@@ -18,3 +19,16 @@
 3. Değişkeni ekledikten sonra Deployments → son yayın → Redeploy.
 
 `api` klasöründeki dosyalar `/api/dogrula` ve `/api/sohbet` adreslerinde çalışır. Anahtar hiçbir zaman depoya yazılmaz.
+
+## Hesap sistemi (Upstash Redis)
+
+1. Vercel'de projeyi aç → Storage → Create Database → Upstash for Redis (ücretsiz plan) → projeye bağla.
+2. Vercel bağlantı bilgilerini (`KV_REST_API_URL`, `KV_REST_API_TOKEN`) projeye kendisi ekler. Sonra Redeploy.
+3. Veritabanı bağlı değilse site hesapsız çalışır, ilerleme yalnızca o cihazda tutulur.
+
+Şifreler scrypt ile tuzlanarak saklanır; oturum HttpOnly çerezle tutulur. Hesap sistemi kuruluyken Gemini uçları yalnızca giriş yapmış kullanıcılara açıktır.
+
+## Sunum modu
+
+Adresin sonuna `#demo` eklenirse (ör. `https://yesiliz.space/#demo`) günleri ileri alma, örnek veri yükleme ve bildirim önizleme düğmeleri görünür.
+
