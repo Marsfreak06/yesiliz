@@ -10,7 +10,8 @@
 //   GET  /api/sosyal?islem=profil&ad=<ad>           → başka bir kullanıcının herkese açık profili
 //   POST /api/sosyal { islem: 'istek' | 'kabul' | 'reddet' | 'cikar' | 'durt', ad }
 //   POST /api/sosyal { islem: 'avatar', resim } | { islem: 'avatarSil' }
-import { dbVar, redis, oturumBilgi, jsonOku, ciftler, govdeAl, cevap, haftaNo, gunNo, kullaniciAnahtari, adlariGetir } from './_db.js';
+//   POST /api/sosyal { islem: 'kod', kod }         → gizli kodla açılan ürün { urun }
+import { dbVar, redis, oturumBilgi, jsonOku, ciftler, govdeAl, cevap, haftaNo, gunNo, kullaniciAnahtari, adlariGetir, kodOzeti } from './_db.js';
 
 const AVATAR_UST = 60_000; // karakter (yaklaşık 45 KB JPEG)
 const TURLER = ['fidan', 'alan', 'sulama', 'puan'];
@@ -198,6 +199,18 @@ export default async function handler(req, res) {
       const metin = String(g.metin || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 500);
       await redis('HSET', 'degerlendirmeler', me, JSON.stringify({ yildiz, metin, ad: ben.ad, t: Date.now() }));
       return cevap(res, 200, await degerlendirmeOzeti());
+    }
+    if (g.islem === 'kod') {
+      const k = `kod:deneme:${me}:${gunNo()}`;
+      const n = await redis('INCR', k);
+      if (n === 1) await redis('EXPIRE', k, 90000);
+      if (n > 10) return cevap(res, 429, { hata: 'Bugün çok fazla kod denedin, yarın tekrar dene.' });
+      const ozet = kodOzeti(g.kod);
+      const urun = String(g.kod || '').trim().length >= 4 ? await redis('HGET', 'gizlikod', ozet) : null;
+      if (!urun) return cevap(res, 404, { hata: 'Bu kod geçerli değil.' });
+      await redis('SADD', 'kod:kullanan:' + ozet, me);
+      await redis('SADD', 'kodlarim:' + me, ozet);
+      return cevap(res, 200, { urun });
     }
     if (g.islem === 'avatarSil') {
       await redis('DEL', 'avatar:' + me);

@@ -6,8 +6,9 @@
 //   POST /api/yonetim { islem: 'hediye', ad, miktar, not }
 //   POST /api/yonetim { islem: 'fiyat', fiyatlar: { ürünKimliği: puan | null } }
 //   POST /api/yonetim { islem: 'sil', tip: 'fidan' | 'alan' | 'gonderi', id }
+//   POST /api/yonetim { islem: 'kodEkle', kod, urun } | { islem: 'kodSil', id }
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
-import { dbVar, redis, cerezOku, jsonOku, ciftler, govdeAl, cevap, haftaNo, kullaniciAnahtari } from './_db.js';
+import { dbVar, redis, cerezOku, jsonOku, ciftler, govdeAl, cevap, haftaNo, kullaniciAnahtari, kodOzeti } from './_db.js';
 import { gonderiSil } from './akis.js';
 
 const OTURUM = 8 * 3600;           // yönetici oturumu 8 saat
@@ -70,6 +71,10 @@ export default async function handler(req, res) {
       if (!await yoneticiMi(req)) return cevap(res, 401, { hata: 'Yönetici girişi gerekli' });
       if (q.islem === 'kullanicilar') return cevap(res, 200, { kullanicilar: await tumKullanicilar() });
       if (q.islem === 'icerik') {
+        const kodlar = [];
+        for (const [h, urun] of ciftler(await redis('HGETALL', 'gizlikod'))) {
+          kodlar.push({ id: h.slice(0, 12), urun, kullanan: Number(await redis('SCARD', 'kod:kullanan:' + h)) || 0 });
+        }
         const [f, a, d, p, gn] = await Promise.all([
           redis('HGETALL', 'fidanlar'), redis('HGETALL', 'alanlar'), redis('HGETALL', 'degerlendirmeler'), redis('HGETALL', 'magaza:fiyat'),
           redis('HGETALL', 'akis:gonderi'),
@@ -81,6 +86,7 @@ export default async function handler(req, res) {
           alanlar: ciftler(a).map(([, v]) => jsonOku(v)).filter(Boolean).sort((x, y) => y.t - x.t),
           degerlendirmeler: ciftler(d).map(([, v]) => jsonOku(v)).filter(Boolean).sort((x, y) => y.t - x.t),
           gonderiler: ciftler(gn).map(([, v]) => jsonOku(v)).filter(Boolean).sort((x, y) => y.t - x.t),
+          kodlar,
           fiyat,
         });
       }
@@ -119,6 +125,21 @@ export default async function handler(req, res) {
       await redis('RPUSH', 'hediye:' + anahtar, JSON.stringify({ miktar, not, t: Date.now() }));
       await redis('EXPIRE', 'hediye:' + anahtar, 90 * 86400);
       return cevap(res, 200, { tamam: true, ad: u.ad, miktar });
+    }
+
+    if (g.islem === 'kodEkle') {
+      const kod = String(g.kod || '').trim(), urun = String(g.urun || '');
+      if (kod.length < 6 || kod.length > 60) return cevap(res, 400, { hata: 'Kod 6-60 karakter olmalı' });
+      if (!/^[a-z]_[a-z0-9_]{1,30}$/.test(urun)) return cevap(res, 400, { hata: 'Ürün seç' });
+      await redis('HSET', 'gizlikod', kodOzeti(kod), urun);
+      return cevap(res, 200, { tamam: true });
+    }
+    if (g.islem === 'kodSil') {
+      const id = String(g.id || '');
+      for (const [h] of ciftler(await redis('HGETALL', 'gizlikod'))) {
+        if (id.length >= 12 && h.startsWith(id)) { await redis('HDEL', 'gizlikod', h); await redis('DEL', 'kod:kullanan:' + h); return cevap(res, 200, { tamam: true }); }
+      }
+      return cevap(res, 404, { hata: 'Kod bulunamadı' });
     }
 
     if (g.islem === 'fiyat') {

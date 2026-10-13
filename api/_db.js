@@ -3,7 +3,7 @@
 // ortam değişkenlerinden okunur:
 //   - Upstash (HTTP/REST): KV_REST_API_URL + KV_REST_API_TOKEN ya da UPSTASH_REDIS_REST_URL + _TOKEN
 //   - Redis Cloud vb. (klasik bağlantı): REDIS_URL
-import { scrypt as _scrypt } from 'node:crypto';
+import { scrypt as _scrypt, createHash } from 'node:crypto';
 import { promisify } from 'node:util';
 
 const scrypt = promisify(_scrypt);
@@ -86,6 +86,9 @@ export async function oturumKullanici(req) {
   const b = await oturumBilgi(req);
   return b ? b.anahtar : null;
 }
+
+// Gizli kodlar düz metin saklanmaz; büyük-küçük harf ve boşluk farkı gözetmeden özetlenir.
+export const kodOzeti = kod => createHash('sha256').update('yesiliz-kod:' + String(kod || '').trim().toLocaleLowerCase('tr-TR')).digest('hex');
 
 export const kullaniciAnahtari = ad => String(ad || '').trim().toLocaleLowerCase('tr-TR');
 

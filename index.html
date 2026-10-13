@@ -406,6 +406,7 @@ button.upload{background:none;width:100%;font:inherit}
 .yon-hediye{display:flex;gap:8px;flex-wrap:wrap}
 .yon-hediye input{flex:1;min-width:110px;border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg)}
 .yon-hediye input[type=number]{flex:0 1 120px}
+.yon-hediye select{flex:1;min-width:140px;border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg)}
 .yon-fiyatlar{display:flex;flex-direction:column;gap:8px}
 .yon-fiyat{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:2px solid var(--soft)}
 .yon-fiyat input{width:110px;border:2px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--bg);font-variant-numeric:tabular-nums}
@@ -665,7 +666,7 @@ const SHOP=[
  {id:'h_bere',c:'hat',n:'Bere',p:150},{id:'h_kovboy',c:'hat',n:'Kovboy şapkası',p:250},{id:'h_kulaklik',c:'hat',n:'Kulaklık',p:220},{id:'h_kral',c:'hat',n:'Taç',p:450},
  {id:'e_yildiz',c:'eyes',n:'Yıldız gözlük',p:200},{id:'e_kayak',c:'eyes',n:'Kayak gözlüğü',p:230},
  {id:'n_kolye',c:'neck',n:'Yaprak kolye',p:120},{id:'n_kravat',c:'neck',n:'Kravat',p:180},
- {id:'g_tisort',c:'giysi',n:'Yeşil tişört',p:150},{id:'g_onluk',c:'giysi',n:'Bahçıvan önlüğü',p:180},{id:'g_kapusonlu',c:'giysi',n:'Kapüşonlu',p:200},{id:'g_yagmurluk',c:'giysi',n:'Yağmurluk',p:220},{id:'g_pelerin',c:'giysi',n:'Kahraman pelerini',p:320},
+ {id:'g_ekose',c:'giysi',n:'Ekose astarlı gri hırka',p:0,kod:true},{id:'g_tisort',c:'giysi',n:'Yeşil tişört',p:150},{id:'g_onluk',c:'giysi',n:'Bahçıvan önlüğü',p:180},{id:'g_kapusonlu',c:'giysi',n:'Kapüşonlu',p:200},{id:'g_yagmurluk',c:'giysi',n:'Yağmurluk',p:220},{id:'g_pelerin',c:'giysi',n:'Kahraman pelerini',p:320},
  {id:'r_yesil',c:'renk',n:'Yaprak yeşili',p:0},{id:'r_mavi',c:'renk',n:'Okyanus mavisi',p:250},{id:'r_sari',c:'renk',n:'Güneş sarısı',p:250},{id:'r_turuncu',c:'renk',n:'Sonbahar',p:250},
  {id:'r_pembe',c:'renk',n:'Çiçek pembesi',p:300},{id:'r_mor',c:'renk',n:'Lavanta',p:300},{id:'r_gece',c:'renk',n:'Gece',p:400},{id:'r_altin',c:'renk',n:'Altın',p:600}
 ];
@@ -677,7 +678,7 @@ const RENKLER={r_yesil:['#6fd07c','#5cc062','#4fae5d','#c6f2c4'],r_mavi:['#6fb8e
 // Yöneticinin değiştirdiği fiyatlar sunucudan gelir; yoksa varsayılan fiyat geçerli.
 let FIYAT={};
 const fiyat=i=>FIYAT[i.id]??i.p;
-const sahipMi=i=>i.p===0||S.owned.includes(i.id);
+const sahipMi=i=>(i.p===0&&!i.kod)||S.owned.includes(i.id);
 const GUIDE=[
  ['Yeşil yetenek nedir?','Yeşil yetenekler; enerji ve su tasarrufu, atık azaltma, geri dönüşüm, doğayı koruma ve sürdürülebilir çözümler üretme gibi, çevreye duyarlı yaşamak ve çalışmak için gereken bilgi, beceri ve tutumlardır. Gelecekte pek çok meslek bu becerileri bekleyecek.'],
  ['Sürdürülebilirlik okuryazarlığı (OB8) nedir?','Türkiye Yüzyılı Maarif Modeli\'ndeki okuryazarlık becerilerinden biridir. Çevresel, ekonomik ve toplumsal sorunları birlikte düşünebilmeyi, kaynakları bugünü ve geleceği gözeterek kullanmayı ve bu yönde sorumlu kararlar alabilmeyi kapsar. Uygulamadaki görevler bu beceriyi günlük alışkanlığa dönüştürmek için tasarlandı.'],
@@ -889,8 +890,14 @@ Object.assign(ACC,{
 const GIYSI={
  g_tisort:{on:'<rect x="40" y="147" width="120" height="40" fill="#2f86c9"/><path d="M100 152 c-6 3 -7 10 0 14 c7 -4 6 -11 0 -14z" fill="#8fe08a"/>'},
  g_onluk:{on:'<rect x="68" y="142" width="64" height="44" rx="8" fill="#8a6440"/><rect x="84" y="156" width="32" height="13" rx="3" fill="#6d4e30"/><path d="M72 142 L64 128 M128 142 L136 128" stroke="#8a6440" stroke-width="5" stroke-linecap="round"/>'},
- g_kapusonlu:{on:'<rect x="40" y="144" width="120" height="44" fill="#7a5ae0"/><rect x="80" y="160" width="40" height="14" rx="5" fill="#6a4bc8"/><path d="M92 146 v10 M108 146 v10" stroke="#eee" stroke-width="2.5" stroke-linecap="round"/>'},
- g_yagmurluk:{on:'<rect x="40" y="143" width="120" height="44" fill="#f5c518"/><path d="M100 143 v40" stroke="#d9a90c" stroke-width="3"/><circle cx="94" cy="156" r="2.6" fill="#8a6a00"/><circle cx="94" cy="168" r="2.6" fill="#8a6a00"/><path d="M80 143 L100 152 L120 143" fill="none" stroke="#d9a90c" stroke-width="3"/>'},
+ g_kapusonlu:{kol:'#7a5ae0',on:'<rect x="40" y="144" width="120" height="44" fill="#7a5ae0"/><rect x="80" y="160" width="40" height="14" rx="5" fill="#6a4bc8"/><path d="M92 146 v10 M108 146 v10" stroke="#eee" stroke-width="2.5" stroke-linecap="round"/>'},
+ g_yagmurluk:{kol:'#f5c518',on:'<rect x="40" y="143" width="120" height="44" fill="#f5c518"/><path d="M100 143 v40" stroke="#d9a90c" stroke-width="3"/><circle cx="94" cy="156" r="2.6" fill="#8a6a00"/><circle cx="94" cy="168" r="2.6" fill="#8a6a00"/><path d="M80 143 L100 152 L120 143" fill="none" stroke="#d9a90c" stroke-width="3"/>'},
+ // Gizli kodla açılan hırka: gri kumaş, kapüşon içinde bej ekose astar (desen her maskota özel kimlikle tanımlanır).
+ g_ekose:{kol:'#b4b7bb',
+  arka:id=>`<defs><pattern id="${id}e" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="#d8bf98"/><rect x="3" width="2.2" height="14" fill="#2b2b2b"/><rect y="3" width="14" height="2.2" fill="#2b2b2b"/><rect x="9.2" width="1" height="14" fill="#fff"/><rect y="9.2" width="14" height="1" fill="#fff"/><rect x="12" width=".8" height="14" fill="#c2503a"/><rect y="12" width="14" height=".8" fill="#c2503a"/></pattern></defs>`
+   +`<path d="M30 144 A70 84 0 0 1 170 144 Z" fill="#a9adb2" stroke="#1d4a30" stroke-width="3"/><path d="M37 144 A63 76 0 0 1 163 144 Z" fill="url(#${id}e)"/>`,
+  on:id=>`<rect x="40" y="146" width="120" height="44" fill="#b4b7bb"/><path d="M89 146 L100 158 L111 146Z" fill="url(#${id}e)"/><path d="M76 164 Q100 158 124 164 L120 178 L80 178Z" fill="#a6a9ad" stroke="#8f9297" stroke-width="1.5"/><path d="M100 150 V180" stroke="#7e8287" stroke-width="2.5"/><rect x="97.5" y="157" width="5" height="7" rx="1.5" fill="#cfd2d6" stroke="#7e8287"/><path d="M121 152 c-3 1 -3 5 0 6 c3 -1 3 -5 0 -6z" fill="#7e8287"/>`,
+  ust:'<path d="M91 146 V160 M109 146 V160" stroke="#e8e9eb" stroke-width="2" stroke-linecap="round"/><circle cx="91" cy="161" r="1.8" fill="#9a9da2"/><circle cx="109" cy="161" r="1.8" fill="#9a9da2"/>'},
  g_pelerin:{arka:'<path d="M58 116 C38 148 42 178 58 186 L142 186 C158 178 162 148 142 116Z" fill="#c2503a" stroke="#1d4a30" stroke-width="3"/>',
   ust:'<path d="M74 142 Q100 154 126 142" stroke="#8e2f20" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="100" cy="149" r="4.5" fill="#f2b632"/>'}
 };
@@ -902,18 +909,19 @@ function mascot(eq,o={}){
  let s=`<svg class="mascot" viewBox="0 0 200 200" role="img" aria-label="Seri Dostu Filiz"><defs><clipPath id="${kid}"><path d="${govde}"/></clipPath></defs>`;
  if(!o.nobg)s+=BGS[eq.bg]||BGS.b_cayir;else if(o.nobg!=='none')s+='<rect width="200" height="200" fill="#e4f3dc"/>';
  s+='<ellipse cx="100" cy="184" rx="46" ry="7" fill="#000" opacity=".14"/>';
- if(giysi&&giysi.arka)s+=giysi.arka;
+ const parca=v=>typeof v==='function'?v(kid):v,kol=giysi&&giysi.kol||K;
+ if(giysi&&giysi.arka)s+=parca(giysi.arka);
  s+=`<ellipse cx="80" cy="176" rx="13" ry="7" fill="${A}" stroke="${L}" stroke-width="4"/><ellipse cx="120" cy="176" rx="13" ry="7" fill="${A}" stroke="${L}" stroke-width="4"/>`;
  s+=`<path d="M100 80 V56" stroke="${L}" stroke-width="5" stroke-linecap="round"/>`;
  s+=`<path d="M100 60 C86 40 64 42 58 52 C70 68 90 68 100 60Z" fill="#5cc062" stroke="${L}" stroke-width="4" stroke-linejoin="round"/>`;
  s+=`<path d="M100 58 C112 34 140 34 146 44 C134 64 112 66 100 58Z" fill="#8fe08a" stroke="${L}" stroke-width="4" stroke-linejoin="round"/>`;
  s+=`<path d="M66 54 Q82 58 96 60M106 56 Q122 50 138 46" stroke="${L}" stroke-width="2" fill="none" opacity=".45"/>`;
- s+=`<ellipse cx="50" cy="138" rx="9" ry="14" fill="${K}" stroke="${L}" stroke-width="4" transform="rotate(${happy?-35:15} 50 138)"/><ellipse cx="150" cy="138" rx="9" ry="14" fill="${K}" stroke="${L}" stroke-width="4" transform="rotate(${happy?35:-15} 150 138)"/>`;
+ s+=`<ellipse cx="50" cy="138" rx="9" ry="14" fill="${kol}" stroke="${L}" stroke-width="4" transform="rotate(${happy?-35:15} 50 138)"/><ellipse cx="150" cy="138" rx="9" ry="14" fill="${kol}" stroke="${L}" stroke-width="4" transform="rotate(${happy?35:-15} 150 138)"/>`;
  s+=`<path d="${govde}" fill="${G}"/>`;
  s+=`<ellipse cx="100" cy="146" rx="30" ry="22" fill="${B}"/><ellipse cx="74" cy="98" rx="12" ry="6" fill="#fff" opacity=".5" transform="rotate(-30 74 98)"/>`;
- if(giysi&&giysi.on)s+=`<g clip-path="url(#${kid})">${giysi.on}</g>`;
+ if(giysi&&giysi.on)s+=`<g clip-path="url(#${kid})">${parca(giysi.on)}</g>`;
  s+=`<path d="${govde}" fill="none" stroke="${L}" stroke-width="4"/>`;
- if(giysi&&giysi.ust)s+=giysi.ust;
+ if(giysi&&giysi.ust)s+=parca(giysi.ust);
  s+=happy?`<ellipse cx="82" cy="115" rx="9" ry="10.5" fill="#fff" stroke="${L}" stroke-width="3"/><ellipse cx="118" cy="115" rx="9" ry="10.5" fill="#fff" stroke="${L}" stroke-width="3"/><circle cx="83.5" cy="117" r="5.2" fill="#13261a"/><circle cx="119.5" cy="117" r="5.2" fill="#13261a"/><circle cx="85.5" cy="114.5" r="1.9" fill="#fff"/><circle cx="121.5" cy="114.5" r="1.9" fill="#fff"/>`
   :`<path d="M74 117 q8 6 16 0 M110 117 q8 6 16 0" stroke="${L}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
  s+='<ellipse cx="68" cy="131" rx="7.5" ry="4.5" fill="#f2918a" opacity=".8"/><ellipse cx="132" cy="131" rx="7.5" ry="4.5" fill="#f2918a" opacity=".8"/>';
@@ -1043,7 +1051,7 @@ function arkDugmesi(ad){
  return `<button class="btn sec kucuk" data-act="akisArk" data-v="${esc(ad)}">${ic('userplus',16)}Ekle</button>`;
 }
 function akisGonderiHTML(p){
- return `<article class="panel post"><div class="post-h"><button class="kisi" data-act="profil" data-v="${esc(p.ad)}">${avHTML(p.ad,p.benim)}<span style="min-width:0"><b>${esc(p.ad)}</b><span class="small muted" style="display:block">${p.okul?esc(p.okul)+' · ':''}<time datetime="${new Date(p.t).toISOString()}">${gecenZaman(p.t)}</time></span></span></button>${p.benim?'':arkDugmesi(p.ad)}</div>
+ return `<article class="panel post"><div class="post-h"><button class="kisi" data-act="profil" data-v="${esc(p.ad)}">${avHTML(p.ad,p.benim)}<span style="min-width:0"><b>${esc(p.ad)}</b><span class="small muted" style="display:block">${p.okul?esc(p.okul)+' · ':''}<time datetime="${new Date(p.t).toISOString()}" title="${tarihSaatYaz(p.t)}">${gecenZaman(p.t)} · ${tarihSaatYaz(p.t)}</time></span></span></button>${p.benim?'':arkDugmesi(p.ad)}</div>
  ${p.metin?`<p>${esc(p.metin)}</p>`:''}${p.resimVar?`<img src="api/akis?resim=${p.id}" alt="${esc(p.ad)} paylaşımının fotoğrafı" loading="lazy">`:''}
  <div class="post-f"><button class="like" data-act="abegen" data-v="${p.id}" aria-pressed="${p.begendim}">${ic('heart',20)}${p.begeni}</button>
  <span class="small muted" style="font-weight:600;flex:1">${p.benim?'Her beğeni sana +2 puan':p.begendim?`${esc(p.ad)} +2 puan kazandı`:'Beğen, paylaşana +2 puan gitsin'}</span>
@@ -1139,7 +1147,7 @@ function renderMe(){
   body=`<div class="seg" role="group">${CATS.map(([k,l])=>`<button data-act="cat" data-v="${k}" aria-pressed="${shopCat===k}">${l}</button>`).join('')}</div>
   <div class="shop">${SHOP.filter(i=>i.c===shopCat).map(i=>{const own=sahipMi(i),p=fiyat(i),on=S.eq[i.c]===i.id||(i.c==='renk'&&!S.eq.renk&&i.id==='r_yesil');
    const eq={hat:null,neck:null,eyes:null,giysi:null,renk:S.eq.renk,bg:S.eq.bg};eq[i.c]=i.id;
-   return `<button class="item ${on?'on':''}" data-act="buy" data-v="${i.id}">${mascot(eq,{nobg:i.c!=='bg'})}<span>${i.n}</span><span class="price ${!own&&S.points<p?'lack':''}">${on?'Takılı':own?(i.c==='renk'||i.c==='bg'?'Seç':'Tak'):p.toLocaleString('tr-TR')+' puan'}</span></button>`}).join('')}</div>
+   return `<button class="item ${on?'on':''}" data-act="buy" data-v="${i.id}">${mascot(eq,{nobg:i.c!=='bg'})}<span>${i.n}</span><span class="price ${!own&&!i.kod&&S.points<p?'lack':''}">${on?'Takılı':own?(i.c==='renk'||i.c==='bg'?'Seç':'Tak'):i.kod?ic('lock',14)+' Kodla aç':p.toLocaleString('tr-TR')+' puan'}</span></button>`}).join('')}</div>
   <p class="small muted" style="font-weight:600">Puanlarını Filiz için harca. Bugün görev yaptığında Filiz uyanık ve mutlu olur, beklerken uykuya dalar.</p>`;
  } else if(ptab==='rozet'){
   body=`<div class="badges">${BADGES.map(b=>{const ok=b.ok(S),[a,t]=b.pr(S);return `<div class="badge ${ok?'':'locked'}"><span class="medal">${ic(ok?b.ic:'lock',30)}</span><b>${b.n}</b><span>${ok?'Kazanıldı':b.r}</span>${ok?'':`<div class="bar"><i style="width:${Math.round(a/t*100)}%"></i></div><span>${a.toLocaleString('tr-TR')}/${t.toLocaleString('tr-TR')}</span>`}</div>`}).join('')}</div>`;
@@ -1223,6 +1231,8 @@ async function haritaVerisi(zorla){
 const kucukAd=a=>String(a||'').toLocaleLowerCase('tr-TR');
 const gunOnce=t=>{const g=Math.floor((Date.now()-t)/DAY);return g<=0?'bugün':g===1?'dün':`${g} gün önce`};
 const tarihYaz=t=>new Date(t).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+// Cihazın kendi saat dilimine göre tarih ve saat (örn. "13 Eki 21:14"; bu yıl değilse yıl da eklenir).
+const tarihSaatYaz=t=>{const d=new Date(t),buYil=d.getFullYear()===new Date().getFullYear();return d.toLocaleString('tr-TR',{day:'numeric',month:'short',...(buYil?{}:{year:'numeric'}),hour:'2-digit',minute:'2-digit'})};
 const susuzMu=f=>Date.now()-(f.sonSulama||f.t)>3*DAY;
 function alanM2(n){const r=Math.PI/180,R=6378137;let t=0;for(let i=0;i<n.length;i++){const [a1,o1]=n[i],[a2,o2]=n[(i+1)%n.length];t+=(o2-o1)*r*(2+Math.sin(a1*r)+Math.sin(a2*r))}return Math.abs(t*R*R/2)}
 const ekipYazi=k=>[k.ad,...(k.ekip||[]).map(e=>e.ad)].map(esc).join(', ');
@@ -1232,8 +1242,8 @@ function fidanPopup(f){
  const g=Math.floor((Date.now()-f.t)/DAY),benim=USER&&f.sahip===kucukAd(USER);
  return `<div class="pp-baslik">${esc(f.tur||'Fidan')}</div>
  <div class="pp-satir">${ic('user',16)}<span>${ekipYazi(f)}</span></div>
- <div class="pp-satir">${ic('sapling',16)}<span>${g<=0?'Bugün dikildi':`${g} gündür toprakta`} · ${tarihYaz(f.t)}</span></div>
- <div class="pp-satir">${ic('drop',16)}<span>${f.sonSulama?`Son sulama ${gunOnce(f.sonSulama)} (${esc(f.sonSulayan)}) · toplam ${f.sulama} kez`:'Henüz sulanmadı'}</span></div>
+ <div class="pp-satir">${ic('sapling',16)}<span>${g<=0?'Bugün dikildi':`${g} gündür toprakta`} · ${tarihSaatYaz(f.t)}</span></div>
+ <div class="pp-satir">${ic('drop',16)}<span>${f.sonSulama?`Son sulama ${tarihSaatYaz(f.sonSulama)} (${esc(f.sonSulayan)}) · toplam ${f.sulama} kez`:'Henüz sulanmadı'}</span></div>
  ${susuzMu(f)?`<div class="pp-satir" style="color:#C77700">${ic('clock',16)}<span>Bu fidan suya ihtiyaç duyuyor</span></div>`:''}
  <div class="pp-dugmeler"><button class="btn" data-act="sula" data-v="${f.id}">${ic('drop',16)}Suladım (+10)</button>${benim?`<button class="btn sec" data-act="hsil" data-v="fidan:${f.id}">${ic('trash',16)}<span>Sil</span></button>`:''}</div>`;
 }
@@ -1242,7 +1252,7 @@ function alanPopup(a){
  return `<div class="pp-baslik">${esc(a.isim||'Temizlenen alan')}</div>
  <div class="pp-satir">${ic('area',16)}<span>${a.m2.toLocaleString('tr-TR')} m² çöpten temizlendi</span></div>
  <div class="pp-satir">${ic('user',16)}<span>${ekipYazi(a)}</span></div>
- <div class="pp-satir">${ic('clock',16)}<span>${gunOnce(a.t)} · ${tarihYaz(a.t)}</span></div>
+ <div class="pp-satir">${ic('clock',16)}<span>${gunOnce(a.t)} · ${tarihSaatYaz(a.t)}</span></div>
  ${benim?`<div class="pp-dugmeler"><button class="btn sec" data-act="hsil" data-v="alan:${a.id}">${ic('trash',16)}<span>Sil</span></button></div>`:''}`;
 }
 function ozetHTML(){
@@ -1492,6 +1502,25 @@ async function profilAc(ad){
  <p class="small muted" style="font-weight:600">${r.arkadas} arkadaş · ${r.paylasim} paylaşım. "Bu hafta" haftalık şampiyonluk puanıdır.</p>`);
  $('#layer .sheet .stage .mascot').style.height='200px';
 }
+// Gizli kodlu ürün: fiyat yerine kod istenir; kod sunucuda kontrol edilir.
+function kodPenceresi(it){
+ if(!SUNUCU){toast('Kodla açılan ürünler için giriş yapmalısın','lock');return}
+ const eq={hat:null,neck:null,eyes:null,giysi:null,renk:S.eq.renk,bg:S.eq.bg};eq[it.c]=it.id;
+ sheet(`${sheetHead(it.n,'Gizli kodla açılır')}<div class="stage" style="${sahneZemini(S.eq.bg)}">${mascot(eq)}</div>
+ <p class="small muted" style="font-weight:600">Bu ürün puanla satın alınamaz. Sana verilen gizli kodu yazarsan Filiz'in olur.</p>
+ <form id="kodForm" class="auth-form" data-urun="${it.id}"><label for="kodGir">Gizli kod</label><input type="text" id="kodGir" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="60"><p class="auth-err" id="kodHata" role="alert"></p><button class="btn big">Kodu kullan</button></form>`);
+ $('#layer .sheet .stage .mascot').style.height='200px';setTimeout(()=>$('#kodGir')?.focus(),60);
+}
+async function kodKullan(form){
+ const kod=$('#kodGir').value.trim();if(!kod){$('#kodHata').textContent='Kodu yaz.';return}
+ const btn=form.querySelector('button');btn.disabled=true;
+ const r=await postJSON('api/sosyal',{islem:'kod',kod});btn.disabled=false;
+ if(r.err){$('#kodHata').textContent=r.err;return}
+ const it=SHOP.find(x=>x.id===r.urun);
+ if(!it){$('#kodHata').textContent='Bu kodun ürünü bulunamadı.';return}
+ if(!S.owned.includes(it.id))S.owned.push(it.id);S.eq[it.c]=it.id;closeSheet();commit();
+ kutla(`${it.n} senin!`,'Gizli kod kabul edildi. Filiz yeni kıyafetini hemen giydi.');
+}
 async function durt(ad,btn){
  btn.disabled=true;
  const r=await postJSON('api/sosyal',{islem:'durt',ad});
@@ -1689,17 +1718,21 @@ function yonetimCiz(){
  }else if(YON.sekme==='mag'){
   g=`<p class="small muted" style="font-weight:600">Değiştirdiğin fiyatlar herkesin mağazasında geçerli olur. Kutuyu boşaltırsan ürün varsayılan fiyatına döner.</p>
   <form id="yonFiyat" class="yon-fiyatlar">${CATS.map(([c,l])=>`<h3 style="font-size:20px">${l}</h3>${SHOP.filter(i=>i.c===c).map(i=>`<label class="yon-fiyat"><span><b>${i.n}</b> <span class="small muted">varsayılan ${i.p}</span></span><input type="number" min="0" max="100000" step="1" name="${i.id}" value="${YON.icerik.fiyat[i.id]??''}" placeholder="${i.p}"></label>`).join('')}`).join('')}
-  <button class="btn big">Fiyatları kaydet</button></form>`;
+  <button class="btn big">Fiyatları kaydet</button></form>
+  <section class="panel"><h3 style="font-size:20px">Gizli kodlar</h3>
+  <p class="small muted" style="font-weight:600">Kodlar şifrelenmiş saklanır, sonradan görüntülenemez. Kodu unutursan silip yenisini oluştur.</p>
+  ${(YON.icerik.kodlar||[]).map(k=>{const u=SHOP.find(x=>x.id===k.urun);return `<div class="ark-satir"><b>${esc(u?u.n:k.urun)}<br><span class="small muted">${k.kullanan} kişi kullandı · kimlik ${esc(k.id)}</span></b><button class="btn sec kucuk" data-act="yonkodsil" data-v="${esc(k.id)}">${ic('trash',16)}<span>Sil</span></button></div>`}).join('')||'<p class="small muted">Henüz kod yok.</p>'}
+  <form id="yonKod" class="yon-hediye"><input type="text" placeholder="Yeni kod" aria-label="Yeni gizli kod" minlength="6" maxlength="60" required autocomplete="off"><select aria-label="Kodla açılacak ürün">${SHOP.filter(i=>i.kod).concat(SHOP.filter(i=>!i.kod&&i.p>0)).map(i=>`<option value="${i.id}">${esc(i.n)}${i.kod?' (gizli)':''}</option>`).join('')}</select><button class="btn">Kod ekle</button></form></section>`;
  }else if(YON.sekme==='har'){
   const fs=YON.icerik.fidanlar,as=YON.icerik.alanlar;
-  g=`<h3 style="font-size:20px">Fidanlar (${fs.length})</h3><div class="yon-liste">${fs.map(f=>`<div class="ark-satir"><b>${esc(f.tur)} · ${ekipYazi(f)}<br><span class="small muted">${tarihYaz(f.t)} · ${f.sulama} sulama · ${f.lat.toFixed(4)}, ${f.lng.toFixed(4)}</span></b><button class="btn sec" data-act="yonsil" data-v="fidan:${f.id}">${ic('trash',16)}<span>Sil</span></button></div>`).join('')||'<p class="muted">Henüz fidan yok.</p>'}</div>
-  <h3 style="font-size:20px">Temizlenen alanlar (${as.length})</h3><div class="yon-liste">${as.map(a=>`<div class="ark-satir"><b>${esc(a.isim||'Adsız alan')} · ${a.m2.toLocaleString('tr-TR')} m²<br><span class="small muted">${ekipYazi(a)} · ${tarihYaz(a.t)}</span></b><button class="btn sec" data-act="yonsil" data-v="alan:${a.id}">${ic('trash',16)}<span>Sil</span></button></div>`).join('')||'<p class="muted">Henüz alan yok.</p>'}</div>`;
+  g=`<h3 style="font-size:20px">Fidanlar (${fs.length})</h3><div class="yon-liste">${fs.map(f=>`<div class="ark-satir"><b>${esc(f.tur)} · ${ekipYazi(f)}<br><span class="small muted">${tarihSaatYaz(f.t)} · ${f.sulama} sulama · ${f.lat.toFixed(4)}, ${f.lng.toFixed(4)}</span></b><button class="btn sec" data-act="yonsil" data-v="fidan:${f.id}">${ic('trash',16)}<span>Sil</span></button></div>`).join('')||'<p class="muted">Henüz fidan yok.</p>'}</div>
+  <h3 style="font-size:20px">Temizlenen alanlar (${as.length})</h3><div class="yon-liste">${as.map(a=>`<div class="ark-satir"><b>${esc(a.isim||'Adsız alan')} · ${a.m2.toLocaleString('tr-TR')} m²<br><span class="small muted">${ekipYazi(a)} · ${tarihSaatYaz(a.t)}</span></b><button class="btn sec" data-act="yonsil" data-v="alan:${a.id}">${ic('trash',16)}<span>Sil</span></button></div>`).join('')||'<p class="muted">Henüz alan yok.</p>'}</div>`;
  }else if(YON.sekme==='akis'){
   const gs=YON.icerik.gonderiler||[];
-  g=`<h3 style="font-size:20px">Paylaşımlar (${gs.length})</h3><div class="yon-liste">${gs.map(p=>`<div class="panel"><div class="acct">${avHTML(p.ad)}<b style="flex:1;min-width:0">${esc(p.ad)}<br><span class="small muted">${p.okul?esc(p.okul)+' · ':''}${tarihYaz(p.t)}</span></b><button class="btn sec" data-act="yonsil" data-v="gonderi:${p.id}">${ic('trash',16)}<span>Sil</span></button></div>${p.metin?`<p>${esc(p.metin)}</p>`:''}${p.resimVar?`<img src="api/akis?resim=${p.id}" alt="" loading="lazy" style="width:100%;max-width:320px;border-radius:14px">`:''}</div>`).join('')||'<p class="muted">Henüz paylaşım yok.</p>'}</div>`;
+  g=`<h3 style="font-size:20px">Paylaşımlar (${gs.length})</h3><div class="yon-liste">${gs.map(p=>`<div class="panel"><div class="acct">${avHTML(p.ad)}<b style="flex:1;min-width:0">${esc(p.ad)}<br><span class="small muted">${p.okul?esc(p.okul)+' · ':''}${tarihSaatYaz(p.t)}</span></b><button class="btn sec" data-act="yonsil" data-v="gonderi:${p.id}">${ic('trash',16)}<span>Sil</span></button></div>${p.metin?`<p>${esc(p.metin)}</p>`:''}${p.resimVar?`<img src="api/akis?resim=${p.id}" alt="" loading="lazy" style="width:100%;max-width:320px;border-radius:14px">`:''}</div>`).join('')||'<p class="muted">Henüz paylaşım yok.</p>'}</div>`;
  }else{
   const ds=YON.icerik.degerlendirmeler,ort=ds.length?ds.reduce((a,d)=>a+d.yildiz,0)/ds.length:0;
-  g=`<p style="font-weight:800">${ds.length} değerlendirme · ortalama ${ort.toLocaleString('tr-TR',{maximumFractionDigits:1})}</p><div class="yon-liste">${ds.map(d=>`<div class="panel"><div class="acct"><b style="flex:1">${esc(d.ad||'?')}</b>${yildizSirasi(d.yildiz,16)}</div>${d.metin?`<p>${esc(d.metin)}</p>`:'<p class="small muted">Yorum yazılmamış.</p>'}<p class="small muted">${tarihYaz(d.t)}</p></div>`).join('')||'<p class="muted">Henüz değerlendirme yok.</p>'}</div>`;
+  g=`<p style="font-weight:800">${ds.length} değerlendirme · ortalama ${ort.toLocaleString('tr-TR',{maximumFractionDigits:1})}</p><div class="yon-liste">${ds.map(d=>`<div class="panel"><div class="acct"><b style="flex:1">${esc(d.ad||'?')}</b>${yildizSirasi(d.yildiz,16)}</div>${d.metin?`<p>${esc(d.metin)}</p>`:'<p class="small muted">Yorum yazılmamış.</p>'}<p class="small muted">${tarihSaatYaz(d.t)}</p></div>`).join('')||'<p class="muted">Henüz değerlendirme yok.</p>'}</div>`;
  }
  y.innerHTML=`<div class="main"><header class="topbar"><h1>Yönetim</h1><div class="pills"><button class="btn sec" data-act="yonkapat">Uygulamaya dön</button><button class="btn sec" data-act="yoncikis">${ic('out',18)}Çıkış</button></div></header>
  <div class="view"><div class="seg" role="group">${sekmeler.map(([k,l])=>`<button data-act="yonsekme" data-v="${k}" aria-pressed="${YON.sekme===k}">${l}</button>`).join('')}</div>${g}</div></div>`;
@@ -1824,6 +1857,7 @@ function tiklama(e){
  if(a==='yonsekme'){YON.sekme=v;yonetimCiz();scrollTo(0,0);return}
  if(a==='yonhediye'){YON.acik=YON.acik===v?null:v;yonetimCiz();setTimeout(()=>document.querySelector('.yon-hediye input')?.focus(),30);return}
  if(a==='yonsil'){yonetimSil(v,el);return}
+ if(a==='yonkodsil'){if(!el.dataset.sure){el.dataset.sure=1;el.lastChild.textContent='Emin misin?';return}postJSON('api/yonetim',{islem:'kodSil',id:v}).then(r=>{if(r.err)return toast(r.err,'lock');YON.icerik.kodlar=YON.icerik.kodlar.filter(k=>k.id!==v);toast('Kod silindi','lock');yonetimCiz()});return}
  if(a==='hfiltre'){H.filtre=v;document.querySelectorAll('[data-act="hfiltre"]').forEach(b=>b.classList.toggle('ok',b.dataset.v===v));katmanCiz();return}
  if(a==='konum'){konumaGit();return}
  if(a==='htur'){H.taslak.agac=v;panelYenile();return}
@@ -1868,6 +1902,7 @@ function tiklama(e){
  if(a==='buy'){const it=SHOP.find(x=>x.id===v),p=fiyat(it);
   // Arka plan ve renk her zaman seçili olmalı; diğerleri tekrar basınca çıkarılır.
   if(sahipMi(it)){S.eq[it.c]=S.eq[it.c]===v&&it.c!=='bg'&&it.c!=='renk'?null:v;commit();return}
+  if(it.kod){kodPenceresi(it);return}
   if(S.points<p){toast(`${p-S.points} puan daha lazım`,'leaf');return}S.points-=p;S.owned.push(v);S.eq[it.c]=v;toast(`${it.n} alındı ve takıldı`,'shop');konfeti(60);commit();return}
  if(a==='star'){S.rating={...(S.rating||{}),stars:+v,text:$('#rtext')?.value||'',sent:false};save();render();return}
  if(a==='rate'){S.rating={...S.rating,text:$('#rtext')?.value||'',sent:true};degerlendirmeGonder();commit();toast('Geri bildirimin alındı, teşekkürler!','star');return}
@@ -1879,8 +1914,10 @@ function tiklama(e){
 document.addEventListener('click',tiklama);
 document.addEventListener('submit',e=>{
  if(e.target.id==='chatform'){e.preventDefault();ask($('#chatq').value)}
+ if(e.target.id==='kodForm'){e.preventDefault();kodKullan(e.target);return}
  if(e.target.id==='okulForm'){e.preventDefault();okulKaydet();return}
  if(e.target.id==='yonForm'){e.preventDefault();yonetimGiris();return}
+ if(e.target.id==='yonKod'){e.preventDefault();const f=e.target,kod=f.querySelector('input').value.trim(),urun=f.querySelector('select').value;postJSON('api/yonetim',{islem:'kodEkle',kod,urun}).then(r=>{if(r.err)return toast(r.err,'lock');toast('Kod eklendi','lock');yonetimVeri()});return}
  if(e.target.id==='yonFiyat'){e.preventDefault();yonetimFiyat(e.target);return}
  if(e.target.classList.contains('yon-hediye')){e.preventDefault();yonetimHediye(e.target);return}
  if(e.target.id==='arkForm'){e.preventDefault();const ad=$('#arkAd').value.trim();if(ad)arkIslem('istek',ad)}

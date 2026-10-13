@@ -139,6 +139,7 @@ export default async function handler(req, res) {
       for (const o of await redis('SMEMBERS', 'giden:' + anahtar)) await redis('SREM', 'istekler:' + o, anahtar);
       for (const o of await redis('SMEMBERS', 'istekler:' + anahtar)) await redis('SREM', 'giden:' + o, anahtar);
       await redis('HDEL', 'degerlendirmeler', anahtar);
+      for (const h of await redis('SMEMBERS', 'kodlarim:' + anahtar)) await redis('SREM', 'kod:kullanan:' + h, anahtar);
       if (k.okul) await redis('HINCRBY', 'okul:uye', okulAnahtari(k.okul), -1);
       for (const id of await redis('SMEMBERS', 'akis:benim:' + anahtar)) {
         await redis('HDEL', 'akis:gonderi', id); await redis('HDEL', 'akis:resim', id); await redis('ZREM', 'akis:zaman', id); await redis('DEL', 'begeni:' + id);
@@ -148,7 +149,7 @@ export default async function handler(req, res) {
       // Diğer cihazlardaki oturumlar, kullanıcı kaydı silindiği için geçersiz olur (bkz. oturumDegeri).
       await redis('DEL', 'kullanici:' + anahtar, 'durum:' + anahtar, 'oturum:' + cerezOku(req, 'oturum'),
         'benim:' + anahtar, 'arkadas:' + anahtar, 'giden:' + anahtar, 'istekler:' + anahtar, 'avatar:' + anahtar,
-        'hediye:' + anahtar, 'bildirim:' + anahtar, 'aktif:' + anahtar, 'akis:benim:' + anahtar);
+        'hediye:' + anahtar, 'bildirim:' + anahtar, 'aktif:' + anahtar, 'akis:benim:' + anahtar, 'kodlarim:' + anahtar);
       cerezYaz(res, '', 0);
       return cevap(res, 200, { tamam: true });
     }
