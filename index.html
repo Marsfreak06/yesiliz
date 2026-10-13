@@ -170,6 +170,8 @@ button.chip{border:0;cursor:pointer;font-family:inherit}
 /* Sheets */
 .sheet-wrap{position:fixed;inset:0;z-index:40;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center;animation:fade .18s ease}
 .sheet{background:var(--surface);width:100%;max-width:640px;max-height:92dvh;overflow-y:auto;border-radius:28px 28px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;animation:up .24s cubic-bezier(.2,.9,.3,1.2)}
+/* Pencere içeriği sığmazsa bölümler ezilmez, pencere kaydırılır. */
+.sheet>*{flex-shrink:0}
 @media (min-width:700px){.sheet-wrap{align-items:center;padding:24px}.sheet{border-radius:28px;max-height:88dvh;border:2px solid var(--line);box-shadow:0 6px 0 var(--line)}}
 .sheet-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .sheet-h h3{font-size:26px}
@@ -1540,7 +1542,7 @@ async function profilAc(ad){
  <h3 style="font-size:20px">Rozetler (${rozetler.length}/${BADGES.length})</h3>
  ${rozetler.length?`<div class="badges">${rozetler.map(b=>`<div class="badge"><span class="medal">${ic(b.ic,30)}</span><b>${b.n}</b><span>${b.r}</span></div>`).join('')}</div>`:'<p class="small muted" style="font-weight:600">Henüz rozet kazanmamış.</p>'}
  <p class="small muted" style="font-weight:600">${r.arkadas} arkadaş · ${r.paylasim} paylaşım. "Bu hafta" haftalık şampiyonluk puanıdır.</p>`);
- $('#layer .sheet .stage .mascot').style.height='200px';
+ const m=$('#layer .sheet .stage .mascot');if(m){m.style.height='200px';m.style.width='200px'}
 }
 // Gizli kodlu ürün: fiyat yerine kod istenir; kod sunucuda kontrol edilir.
 function kodPenceresi(it){
