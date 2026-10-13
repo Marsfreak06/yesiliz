@@ -312,9 +312,17 @@ input:focus,textarea:focus{outline:none;border-color:var(--leaf)}
 .auth-err{color:var(--coral);font-weight:800;min-height:1.5em}
 .auth-hint{text-align:center;color:var(--muted);font-size:14px;font-weight:600}
 
-/* Avatars with profile photo */
+/* Avatars: profile photo on top, otherwise the person's own Filiz */
 .av{position:relative;overflow:hidden}
-.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;cursor:zoom-in}
+.av-taban{display:grid;place-items:center;width:100%;height:100%}
+.av.filizli{background:#e4f3dc!important}
+.av.filizli .av-taban .mascot{width:100%;height:100%}
+.pp-buyuk{position:fixed;inset:0;z-index:95;background:rgba(8,20,12,.86);display:grid;place-items:center;padding:24px;animation:fade .18s ease;cursor:zoom-out}
+.pp-buyuk figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:12px;max-width:min(92vw,520px)}
+.pp-buyuk img{width:min(92vw,520px,72dvh);aspect-ratio:1;object-fit:cover;border-radius:28px;border:4px solid #fff;box-shadow:0 10px 40px rgba(0,0,0,.4);animation:pop .3s cubic-bezier(.2,1.2,.4,1)}
+.pp-buyuk figcaption{color:#fff;font-family:var(--display);font-size:24px;font-weight:800}
+.pp-buyuk .x{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:16px}
 .me-av{position:relative;width:76px;height:76px;flex:none;cursor:pointer}
 .me-av .av{width:76px;height:76px;font-size:26px}
 .me-av .cam{position:absolute;right:-4px;bottom:-4px;width:30px;height:30px;border-radius:50%;background:var(--sky);color:#fff;display:grid;place-items:center;border:3px solid var(--bg)}
@@ -911,7 +919,7 @@ let maskotNo=0;
 function mascot(eq,o={}){
  const happy=o.mood!=='sleepy',L='#1d4a30',[G,K,A,B]=RENKLER[eq.renk]||RENKLER.r_yesil,giysi=GIYSI[eq.giysi],kid='fz'+(++maskotNo);
  const govde='M48 128 C48 94 72 78 100 78 C128 78 152 94 152 128 C152 160 130 176 100 176 C70 176 48 160 48 128Z';
- let s=`<svg class="mascot" viewBox="0 0 200 200" role="img" aria-label="Seri Dostu Filiz"><defs><clipPath id="${kid}"><path d="${govde}"/></clipPath></defs>`;
+ let s=`<svg class="mascot" viewBox="${o.kadraj?'40 50 120 120':'0 0 200 200'}" role="img" aria-label="Seri Dostu Filiz"><defs><clipPath id="${kid}"><path d="${govde}"/></clipPath></defs>`;
  if(!o.nobg)s+=BGS[eq.bg]||BGS.b_cayir;else if(o.nobg!=='none')s+='<rect width="200" height="200" fill="#e4f3dc"/>';
  s+='<ellipse cx="100" cy="184" rx="46" ry="7" fill="#000" opacity=".14"/>';
  const parca=v=>typeof v==='function'?v(kid):v,kol=giysi&&giysi.kol||K;
@@ -1100,9 +1108,38 @@ function renderFeed(){
 }
 // Gerçek kullanıcı adlarında profil fotoğrafı denenir; yoksa baş harfler görünür.
 const gercekKullanici=n=>SUNUCU&&/^[a-zA-Z0-9_.çğıöşüÇĞİÖŞÜ]{3,20}$/.test(n||'');
+// Fotoğrafı olmayanlarda baş harfler yerine kişinin güncel Filiz'i görünür; fotoğraf varsa üstte durur ve dokununca büyür.
+const FILIZ=new Map();let filizBekleyen=new Set(),filizZaman=null;
+function filizIste(ad){
+ const k=kucukAd(ad);if(FILIZ.has(k)||filizBekleyen.has(ad))return;
+ filizBekleyen.add(ad);clearTimeout(filizZaman);filizZaman=setTimeout(filizleriGetir,60);
+}
+async function filizleriGetir(){
+ const adlar=[...filizBekleyen].slice(0,60);filizBekleyen=new Set([...filizBekleyen].slice(60));
+ if(!adlar.length)return;
+ adlar.forEach(a=>FILIZ.set(kucukAd(a),null));
+ try{const r=await fetch('api/sosyal?islem=filizler&adlar='+encodeURIComponent(adlar.join(',')));if(r.ok){const j=await r.json();for(const [a,eq] of Object.entries(j.filizler))FILIZ.set(kucukAd(a),eq)}}catch(e){}
+ if(filizBekleyen.size)filizZaman=setTimeout(filizleriGetir,60);
+ avatarlariYenile();
+}
+// Sadece avatarların içi güncellenir; sayfa yeniden çizilmez, kaydırma ve yazılanlar kaybolmaz.
+function avatarlariYenile(){document.querySelectorAll('.av[data-ad]').forEach(el=>{const t=el.querySelector('.av-taban'),eq=filizKiyafeti(el.dataset.ad);if(t&&eq&&!t.dataset.filiz){t.dataset.filiz=1;t.innerHTML=mascot(eq,{nobg:'none',kadraj:1});el.classList.add('filizli')}})}
+function filizKiyafeti(ad){
+ if(kucukAd(ad)===kucukAd(USER))return S.eq;
+ const eq=FILIZ.get(kucukAd(ad));
+ return eq?{hat:null,neck:null,eyes:null,giysi:null,renk:'r_yesil',bg:'b_cayir',...eq}:null;
+}
 function avHTML(name,me){
- const img=gercekKullanici(name)?`<img src="api/sosyal?avatar=${encodeURIComponent(name)}${name===USER?'&v='+AVV:''}" alt="" loading="lazy" onerror="this.remove()">`:'';
- return `<span class="av" style="background:${me?'var(--leaf)':avColor(name)}">${initials(name)}${img}</span>`;
+ if(!gercekKullanici(name))return `<span class="av" style="background:${me?'var(--leaf)':avColor(name)}">${initials(name)}</span>`;
+ const eq=filizKiyafeti(name);if(!eq)filizIste(name);
+ const taban=eq?`<span class="av-taban" data-filiz="1">${mascot(eq,{nobg:'none',kadraj:1})}</span>`:`<span class="av-taban">${initials(name)}</span>`;
+ const img=`<img src="api/sosyal?avatar=${encodeURIComponent(name)}${name===USER?'&v='+AVV:''}" alt="${esc(name)} profil fotoğrafı" loading="lazy" data-act="ppbuyut" data-v="${esc(name)}" onerror="this.remove()">`;
+ return `<span class="av${eq?' filizli':''}" data-ad="${esc(name)}" style="background:${me?'var(--leaf)':avColor(name)}">${taban}${img}</span>`;
+}
+function ppBuyut(ad){
+ const el=document.createElement('div');el.className='pp-buyuk';el.dataset.act='ppkapat';el.setAttribute('role','dialog');el.setAttribute('aria-label',ad+' profil fotoğrafı');
+ el.innerHTML=`<figure><img src="api/sosyal?avatar=${encodeURIComponent(ad)}${ad===USER?'&v='+AVV:''}" alt="${esc(ad)} profil fotoğrafı"><figcaption>${esc(ad)}</figcaption></figure><button class="x" data-act="ppkapat" aria-label="Kapat">${ic('x',20)}</button>`;
+ document.body.appendChild(el);
 }
 const profilAttr=n=>gercekKullanici(n)?`data-act="profil" data-v="${esc(n)}"`:'';
 function lbRow(i,name,pts,me,sub=''){return `<div class="lbr ${me?'me':''}" ${profilAttr(name)}><span class="n">${i}</span>${avHTML(name,me)}<div style="min-width:0"><b>${esc(name)}</b>${sub?`<p class="small muted">${sub}</p>`:''}</div><b>${pts.toLocaleString('tr-TR')}</b></div>`}
@@ -1541,9 +1578,10 @@ async function arkIslem(islem,ad){
 async function avatarYukle(file){
  try{
   const url=URL.createObjectURL(file);const i=await loadImg(url);URL.revokeObjectURL(url);
-  const s=Math.min(i.naturalWidth,i.naturalHeight),c=document.createElement('canvas');c.width=c.height=160;
-  c.getContext('2d').drawImage(i,(i.naturalWidth-s)/2,(i.naturalHeight-s)/2,s,s,0,0,160,160);
-  const r=await postJSON('api/sosyal',{islem:'avatar',resim:c.toDataURL('image/jpeg',.82)});
+  // Büyütülünce net görünsün diye 400 piksel kare olarak kaydedilir.
+  const s=Math.min(i.naturalWidth,i.naturalHeight),c=document.createElement('canvas'),b=Math.min(400,s);c.width=c.height=b;
+  c.getContext('2d').drawImage(i,(i.naturalWidth-s)/2,(i.naturalHeight-s)/2,s,s,0,0,b,b);
+  const r=await postJSON('api/sosyal',{islem:'avatar',resim:c.toDataURL('image/jpeg',.8)});
   if(r.err){toast(r.err,'camera');return}
   AVV=Date.now();toast('Profil fotoğrafın güncellendi','camera');render();
  }catch(e){toast('Fotoğraf açılamadı','camera')}
@@ -1965,6 +2003,8 @@ function tiklama(e){
  if(a==='abegen'){akisBegen(v);return}
  if(a==='akisArk'){el.disabled=true;arkIslem('istek',v);return}
  if(a==='profil'){profilAc(v);return}
+ if(a==='ppbuyut'){e.preventDefault();ppBuyut(v);return}
+ if(a==='ppkapat'){document.querySelectorAll('.pp-buyuk').forEach(x=>x.remove());return}
  if(a==='asil'){akisSil(v,el);return}
  if(a==='post'&&SUNUCU){akisPaylas(el);return}
  if(a==='post'){const txt=draft.trim();if(!txt&&!draftImg){toast('Paylaşmak için bir yazı ya da fotoğraf ekle','image');return}
@@ -2012,7 +2052,7 @@ document.addEventListener('change',async e=>{
  if(t.id==='non'){S.notifyOn=t.checked;save();toast(t.checked?'Hatırlatmalar açık':'Hatırlatmalar kapalı','bell')}
 });
 document.addEventListener('keydown',e=>{
- if(e.key==='Escape'){if(partiAcik)siradakiParti();else closeSheet();return}
+ if(e.key==='Escape'){const pp=document.querySelector('.pp-buyuk');if(pp){pp.remove();return}if(partiAcik)siradakiParti();else closeSheet();return}
  const y={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r',w:'u',s:'d',a:'l',d:'r',W:'u',S:'d',A:'l',D:'r'}[e.key];
  if(y&&OYUN.d&&OYUN.d.calisiyor&&$('#yilan')){e.preventDefault();yonVer(y)}
 });

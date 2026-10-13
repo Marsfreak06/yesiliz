@@ -7,6 +7,7 @@
 //   GET  /api/sosyal?islem=hediyeler                → { hediyeler: [{ miktar, not, t }] } (teslim edilince silinir)
 //   POST /api/sosyal { islem: 'degerlendir', yildiz, metin }
 //   GET  /api/sosyal?islem=okullar                  → { okullar: [{ ad, uye }] }
+//   GET  /api/sosyal?islem=filizler&adlar=a,b       → { filizler: { ad: kıyafet } } (liste avatarları için)
 //   GET  /api/sosyal?islem=profil&ad=<ad>           → başka bir kullanıcının herkese açık profili
 //   POST /api/sosyal { islem: 'istek' | 'kabul' | 'reddet' | 'cikar' | 'durt', ad }
 //   POST /api/sosyal { islem: 'avatar', resim } | { islem: 'avatarSil' }
@@ -14,7 +15,7 @@
 import { bildirimDene } from './_push.js';
 import { dbVar, redis, oturumBilgi, jsonOku, ciftler, govdeAl, cevap, haftaNo, gunNo, kullaniciAnahtari, adlariGetir, kodOzeti } from './_db.js';
 
-const AVATAR_UST = 60_000; // karakter (yaklaşık 45 KB JPEG)
+const AVATAR_UST = 120_000; // karakter (yaklaşık 90 KB JPEG; büyütülünce net görünsün diye 400 piksel)
 const TURLER = ['fidan', 'alan', 'sulama', 'puan'];
 // Şampiyonluk puanı = fidan × 100 + temizlenen m² ÷ 10 + sulama × 25 + haftalık puan ÷ 10
 // (puan tarayıcıda hesaplandığı için ağırlığı düşük tutulur; gerçek dünyadaki eylemler öne çıkar)
@@ -116,6 +117,16 @@ export default async function handler(req, res) {
       }
       if (q.islem === 'degerlendirmeler') return cevap(res, 200, await degerlendirmeOzeti());
       // Kayıtta öneri olarak gösterilen okul listesi (öğrenci sayısına göre).
+      // Listelerdeki küçük avatarlar için kullanıcıların güncel Filiz kıyafetleri (en fazla 60 kişi).
+      if (q.islem === 'filizler') {
+        const adlar = String(q.adlar || '').split(',').map(a => a.trim()).filter(Boolean).slice(0, 60);
+        if (!adlar.length) return cevap(res, 200, { filizler: {} });
+        const durumlar = await redis('MGET', ...adlar.map(a => 'durum:' + kullaniciAnahtari(a)));
+        const filizler = {};
+        adlar.forEach((a, i) => { const d = jsonOku(durumlar[i]); filizler[a] = d && d.eq ? d.eq : null; });
+        res.setHeader('Cache-Control', 'private, max-age=60');
+        return res.status(200).json({ filizler });
+      }
       if (q.islem === 'okullar') {
         const [uye, ad] = await Promise.all([redis('HGETALL', 'okul:uye'), redis('HGETALL', 'okul:ad')]);
         const adlar = Object.fromEntries(ciftler(ad));
