@@ -4,9 +4,10 @@
 //   POST /api/hesap { islem: 'cikis' }
 //   PUT  /api/hesap { durum }            → ilerlemeyi kaydeder
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import { dbVar, redis, cerezOku, gecerliJeton, oturumKullanici, sifreOzeti } from './_db.js';
+import { dbVar, redis, cerezOku, gecerliJeton, oturumKullanici, oturumDegeri, sifreOzeti } from './_db.js';
 
-const OTURUM_SURESI = 60 * 60 * 24 * 30;
+// Oturum 180 gün sürer ve site her açıldığında yenilenir; düzenli kullanan bir daha şifre girmez.
+const OTURUM_SURESI = 60 * 60 * 24 * 180;
 const AD_KURALI = /^[a-zA-Z0-9_.çğıöşüÇĞİÖŞÜ]{3,20}$/;
 const EN_BUYUK_DURUM = 300_000;
 
@@ -34,9 +35,9 @@ async function denemeHakkiVar(req) {
   return sayi <= 20;
 }
 
-async function oturumAc(res, anahtar) {
+async function oturumAc(res, anahtar, olusturma) {
   const jeton = randomBytes(32).toString('hex');
-  await redis('SET', 'oturum:' + jeton, anahtar, 'EX', OTURUM_SURESI);
+  await redis('SET', 'oturum:' + jeton, oturumDegeri(anahtar, olusturma), 'EX', OTURUM_SURESI);
   cerezYaz(res, jeton, OTURUM_SURESI);
 }
 
@@ -58,6 +59,9 @@ export default async function handler(req, res) {
       const anahtar = await oturumKullanici(req);
       const k = anahtar && await kullaniciAl(anahtar);
       if (!k) return cevap(res, 401, { hata: 'Giriş yapılmadı' });
+      const jeton = cerezOku(req, 'oturum');
+      await redis('EXPIRE', 'oturum:' + jeton, OTURUM_SURESI);
+      cerezYaz(res, jeton, OTURUM_SURESI);
       return cevap(res, 200, { kullanici: k.ad, durum: await durumAl(anahtar) });
     }
 
@@ -83,6 +87,19 @@ export default async function handler(req, res) {
       return cevap(res, 200, { tamam: true });
     }
 
+    if (g.islem === 'sil') {
+      const anahtar = await oturumKullanici(req);
+      const k = anahtar && await kullaniciAl(anahtar);
+      if (!k) return cevap(res, 401, { hata: 'Oturumun kapanmış, tekrar giriş yap' });
+      if (!await denemeHakkiVar(req)) return cevap(res, 429, { hata: 'Çok fazla deneme yaptın. 15 dakika sonra tekrar dene.' });
+      const ozet = await sifreOzeti(String(g.sifre || ''), k.tuz);
+      if (!timingSafeEqual(Buffer.from(ozet, 'hex'), Buffer.from(k.ozet, 'hex'))) return cevap(res, 401, { hata: 'Şifre yanlış.' });
+      // Diğer cihazlardaki oturumlar, kullanıcı kaydı silindiği için geçersiz olur (bkz. oturumDegeri).
+      await redis('DEL', 'kullanici:' + anahtar, 'durum:' + anahtar, 'oturum:' + cerezOku(req, 'oturum'));
+      cerezYaz(res, '', 0);
+      return cevap(res, 200, { tamam: true });
+    }
+
     if (g.islem !== 'giris' && g.islem !== 'kayit') return cevap(res, 400, { hata: 'Geçersiz istek' });
     const ad = String(g.ad || '').trim();
     const sifre = String(g.sifre || '');
@@ -97,10 +114,11 @@ export default async function handler(req, res) {
     if (g.islem === 'kayit') {
       const tuz = randomBytes(16).toString('hex');
       const ozet = await sifreOzeti(sifre, tuz);
-      const kayit = JSON.stringify({ ad, tuz, ozet, olusturma: Date.now() });
+      const olusturma = Date.now();
+      const kayit = JSON.stringify({ ad, tuz, ozet, olusturma });
       const sonuc = await redis('SET', 'kullanici:' + anahtar, kayit, 'NX');
       if (sonuc !== 'OK') return cevap(res, 409, { hata: 'Bu kullanıcı adı alınmış, başka bir ad dene.' });
-      await oturumAc(res, anahtar);
+      await oturumAc(res, anahtar, olusturma);
       return cevap(res, 200, { kullanici: ad, durum: null });
     }
 
@@ -114,7 +132,7 @@ export default async function handler(req, res) {
     if (!timingSafeEqual(Buffer.from(ozet, 'hex'), Buffer.from(k.ozet, 'hex'))) {
       return cevap(res, 401, { hata: 'Kullanıcı adı veya şifre yanlış.' });
     }
-    await oturumAc(res, anahtar);
+    await oturumAc(res, anahtar, k.olusturma);
     return cevap(res, 200, { kullanici: k.ad, durum: await durumAl(anahtar) });
   } catch (e) {
     console.error('hesap', e);

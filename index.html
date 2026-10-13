@@ -413,6 +413,14 @@ const IC={
 };
 
 IC.out='<path d="M14 4h5v16h-5"/><path d="M10 8l-4 4 4 4M6 12h10"/>';
+IC.wrench='<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>';
+IC.trash='<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>';
+IC.plug='<path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5"/>';
+IC.paper='<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/>';
+IC.bread='<path d="M5 10a4 4 0 0 1 2-7.5h10A4 4 0 0 1 19 10v10H5z"/><path d="M9 8v3M12 7v3M15 8v3"/>';
+IC.stairs='<path d="M3 20h5v-5h5v-5h5V5h3"/>';
+IC.apple='<path d="M12 7c-2-2-7-1.5-7 4 0 5 3.5 10 7 8 3.5 2 7-3 7-8 0-5.5-5-6-7-4z"/><path d="M12 7c0-2 1-4 3-4"/>';
+IC.battery='<rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 10v4M7 10v4M11 10v4"/>';
 function ic(n,s=20,extra=''){return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${IC[n]||''}</svg>`}
 function paintIcons(root=document){root.querySelectorAll('[data-ic]').forEach(e=>{e.outerHTML=ic(e.dataset.ic,20)})}
 const LOGO_SVG='<svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><rect x="1" y="3" width="38" height="36" rx="12" fill="#23893F"/><rect x="1" y="1" width="38" height="35" rx="12" fill="#34B35A"/><path d="M11 27c0-10 7-16 18-16 0 10-6 17-16 17" fill="#fff"/><path d="M11 27c4-5 8-8 13-11" stroke="#23893F" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>';
@@ -447,6 +455,18 @@ const TASKS=[
  {id:'matara',t:'Pet şişe yerine matara kullan',d:'Bugün suyunu kendi matarandan iç. Mataranın fotoğrafını yükle.',p:25,chk:'detail',ic:'bottle'},
  {id:'yuruyus',t:'Okula yürüyerek ya da bisikletle git',d:'Servis veya araba yerine yürü ya da pedal çevir. Yoldan bir fotoğraf yükle.',p:35,chk:'plant',ic:'bike'},
  {id:'musluk',t:'Musluğu açık bırakma',d:'Dişini fırçalarken ve ellerini sabunlarken musluğu kapat. Kapalı musluğu fotoğrafla.',p:20,chk:'detail',ic:'drop'},
+ {id:'kapak',t:'Plastik kapakları biriktir',d:'Şişe kapaklarını ayrı bir kutuda biriktir, kutu dolunca geri dönüşüme ver. Kapak kutunu fotoğrafla.',p:20,chk:'detail',ic:'recycle'},
+ {id:'gunisigi',t:'Gün ışığından yararlan',d:'Gündüz lamba yakmak yerine perdeyi aç. Gün ışığıyla aydınlanan çalışma masanı fotoğrafla.',p:20,chk:'detail',ic:'bulb'},
+ {id:'prizden',t:'Cihazları prizden çek',d:'Şarj aletlerini ve bekleme modundaki cihazları prizden çek. Boş prizi fotoğrafla.',p:20,chk:'detail',ic:'plug'},
+ {id:'kagit',t:'Kâğıdın iki yüzünü kullan',d:'Müsvedde için kâğıdın arka yüzünü kullan. İki yüzü de yazılmış kâğıdı fotoğrafla.',p:20,chk:'detail',ic:'paper'},
+ {id:'bezcanta',t:'Alışverişe bez çantayla git',d:'Poşet almak yerine bez çanta kullan. Çantanı fotoğrafla.',p:25,chk:'detail',ic:'shop'},
+ {id:'ekmek',t:'Bayat ekmeği değerlendir',d:'Bayat ekmeği atma; kızartma, galeta ya da başka bir tarif yap. Fotoğrafını yükle.',p:30,chk:'detail',ic:'bread'},
+ {id:'dus',t:'Duşu 5 dakikada bitir',d:'Duşunu 5 dakikada bitir. Zamanlayıcının ekran görüntüsünü yükle.',p:20,chk:'detail',ic:'drop'},
+ {id:'merdiven',t:'Asansör yerine merdiven',d:'Bugün asansör yerine merdiveni kullan. Merdivenden bir fotoğraf yükle.',p:20,chk:'detail',ic:'stairs'},
+ {id:'mevsim',t:'Mevsim meyvesi ye',d:'Paketli atıştırmalık yerine mevsiminde, yerel bir meyve ye. Meyveni fotoğrafla.',p:25,chk:'detail',ic:'apple'},
+ {id:'w_pil',w:1,t:'Atık pilleri topla',d:'Evdeki biten pilleri topla ve okuldaki atık pil kutusuna at. Pilleri fotoğrafla.',p:100,chk:'detail',ic:'battery'},
+ {id:'w_onarim',w:1,t:'Bozuk bir eşyayı onar',d:'Atmak üzere olduğun bir eşyayı onar: oyuncak, kalemlik, kopan bir düğme ya da sökük. Onardığın eşyayı fotoğrafla.',p:110,chk:'detail',ic:'wrench'},
+ {id:'w_tohum',w:1,t:'Tohum ek',d:'Bir saksıya ya da bahçeye tohum ek ve filizlenmesini takip et. Ektiğin yeri fotoğrafla.',p:110,chk:'plant',ic:'leaf'},
  {id:'w_kompost',w:1,t:'Kompost kutusu başlat',d:'Meyve-sebze kabuklarından okulda ya da evde kompost başlat.',p:120,chk:'plant',ic:'leaf'},
  {id:'w_bahce',w:1,t:'Okul bahçesi temizliği',d:'Arkadaşlarınla bahçedeki atıkları topla ve ayrıştır.',p:150,chk:'recycle',ic:'users'}
 ];
@@ -502,9 +522,9 @@ const LEAGUE=[['Ayşe K.',612],['Mert D.',540],['Zeynep A.',488],['Emir T.',430]
 const ALLTIME=[['Zeynep A.',5640],['Ayşe K.',4980],['Emir T.',4420],['Mert D.',3910],['Defne Ö.',3300],['Yusuf B.',2870],['Ela N.',2410],['Kerem Y.',1990],['Can P.',1450]];
 const SCHOOLS=[['Cumhuriyet Ortaokulu',48210,1],['Atatürk Anadolu Lisesi',45930],['Barbaros Ortaokulu',39100],['Fen Lisesi',36420],['Mimar Sinan Ortaokulu',28870],['Gazi İlkokulu',21300]];
 const SEEDPOSTS=[
- {id:'s1',a:'Zeynep A.',sub:'7-B · 2 saat önce',x:'Okul bahçesine sınıfça 12 fidan diktik. Her birine bir isim verdik!',img:'plant',likes:24},
- {id:'s2',a:'Mert D.',sub:'8-A · 5 saat önce',x:'Koridora Sıfır Atık köşesi kurduk: mavi kâğıt, sarı plastik, yeşil cam.',img:'recycle',likes:31},
- {id:'s3',a:'Ela N.',sub:'6-C · dün',x:'Bugün tabağımda sadece 40 g yemek kaldı. Geçen haftaya göre yarı yarıya azaldı.',img:'detail',likes:12}
+ {id:'s1',a:'Zeynep A.',sub:'7-B',t:Date.parse('2026-10-13T09:10:00+03:00'),x:'Okul bahçesine sınıfça 12 fidan diktik. Her birine bir isim verdik!',img:'plant',likes:24},
+ {id:'s2',a:'Mert D.',sub:'8-A',t:Date.parse('2026-10-10T15:40:00+03:00'),x:'Koridora Sıfır Atık köşesi kurduk: mavi kâğıt, sarı plastik, yeşil cam.',img:'recycle',likes:31},
+ {id:'s3',a:'Ela N.',sub:'6-C',t:Date.parse('2026-10-05T12:30:00+03:00'),x:'Bugün tabağımda sadece 40 g yemek kaldı. Geçen haftaya göre yarı yarıya azaldı.',img:'detail',likes:12}
 ];
 const GUIDE=[
  ['Yeşil yetenek nedir?','Yeşil yetenekler; enerji ve su tasarrufu, atık azaltma, geri dönüşüm, doğayı koruma ve sürdürülebilir çözümler üretme gibi, çevreye duyarlı yaşamak ve çalışmak için gereken bilgi, beceri ve tutumlardır. Gelecekte pek çok meslek bu becerileri bekleyecek.'],
@@ -595,6 +615,17 @@ async function authGonder(){
  }catch(e){hata.textContent='Sunucuya ulaşılamadı. İnternet bağlantını kontrol et.'}
  finally{d.disabled=false}
 }
+async function hesapSil(){
+ const sifre=$('#silSifre')?.value||'',hata=$('#silHata');
+ if(sifre.length<6){hata.textContent='Şifreni yaz.';return}
+ try{
+  const r=await fetch('api/hesap',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({islem:'sil',sifre})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){hata.textContent=j.hata||'Hesap silinemedi, tekrar dene.';return}
+ }catch(e){hata.textContent='Sunucuya ulaşılamadı.';return}
+ try{localStorage.removeItem(yerelAnahtar())}catch(e){}
+ clearTimeout(kayitZamani);kayitZamani=null;USER=null;S=BOS();tab='home';authModu('giris');authGoster();toast('Hesabın ve verilerin silindi','trash');
+}
 async function cikisYap(){
  try{await fetch('api/hesap',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({islem:'cikis'})})}catch(e){}
  clearTimeout(kayitZamani);kayitZamani=null;USER=null;S=BOS();tab='home';authModu('giris');authGoster();
@@ -630,6 +661,8 @@ function duoCheck(){
 function checkBadges(){BADGES.forEach(b=>{if(b.ok(S)&&!S.seenBadges.includes(b.id)){S.seenBadges.push(b.id);kutla(`Rozet: ${b.n}`,b.r+'. Rozetin profiline eklendi.')}})}
 function commit(){checkBadges();save();render()}
 function dailyTasks(){return shuffle(TASKS.filter(t=>!t.w),rng(hash(today()+'t'))).slice(0,4)}
+// Her hafta haftalık görevlerden 3'ü dönüşümlü gösterilir.
+function weeklyTasks(){return shuffle(TASKS.filter(t=>t.w),rng(hash('hafta'+weekIdx()))).slice(0,3)}
 const doneList=k=>S.done[k]||(S.done[k]=[]);
 const isDone=t=>doneList(t.w?'w'+weekIdx():today()).includes(t.id);
 function todaysQuiz(){const r=rng(hash(today()+'q'));return shuffle(QUIZ,r).slice(0,5).map(q=>{const order=shuffle([0,1,2,3],r);return{q:q.q,e:q.e,o:order.map(i=>q.o[i]),a:order.indexOf(q.a)}})}
@@ -786,17 +819,32 @@ function renderHome(){
 }
 function taskCard(t){const d=isDone(t);return `<button class="task ${d?'done':''}" data-act="task" data-v="${t.id}"><span class="ti ${CHK_CLASS[t.chk]}">${ic(d?'check':t.ic,26)}</span><span class="tt"><b>${t.t}</b><span class="small muted" style="font-weight:700">${d?'Tamamlandı':'Fotoğrafla doğrula'}</span></span><span class="pp">+${t.p}</span></button>`}
 function renderTasks(){
- const dl=dailyTasks(),wl=TASKS.filter(t=>t.w),dc=dl.filter(isDone).length,left=7-((idxOf(today())+3)%7);
+ const dl=dailyTasks(),wl=weeklyTasks(),dc=dl.filter(isDone).length,left=7-((idxOf(today())+3)%7);
  return `<div class="sec-h"><h2>Bugünün görevleri</h2><span class="chip ${dc?'ok':''}">${dc}/${dl.length}</span></div>
  <div class="tasklist">${dl.map(taskCard).join('')}</div>
  <div class="sec-h"><h2>Haftalık görevler</h2><span class="chip">${left} gün kaldı</span></div>
  <div class="tasklist">${wl.map(taskCard).join('')}</div>
  <p class="small muted" style="font-weight:600">Görevi yaptığını gösteren bir fotoğraf yükle. Yapay zekâ fotoğrafa görevin sorusunu sorar. Onay gelirse görev tamamlanır ve puanın eklenir.</p>`;
 }
+// Sunum modunda günler ileri alınınca paylaşımlar da eskimiş görünsün diye saat kaydırılır.
+const simdi=()=>Date.now()+S.offset*DAY;
+// Eski sürümde zamanı olmayan paylaşımlarda zaman, kimliğindeki tarihten okunur.
+const paylasimZamani=p=>p.t||(/^u\d+$/.test(p.id)?+p.id.slice(1):simdi());
+function gecenZaman(t){
+ const sn=Math.max(0,(simdi()-t)/1000),gun=Math.floor(sn/86400);
+ if(sn<60)return 'az önce';
+ if(sn<3600)return `${Math.floor(sn/60)} dakika önce`;
+ if(sn<86400)return `${Math.floor(sn/3600)} saat önce`;
+ if(gun===1)return 'dün';
+ if(gun<7)return `${gun} gün önce`;
+ if(gun<30)return `${Math.floor(gun/7)} hafta önce`;
+ if(gun<365)return `${Math.floor(gun/30)} ay önce`;
+ return `${Math.floor(gun/365)} yıl önce`;
+}
 function postHTML(p,mine){const liked=!!S.liked[p.id],n=p.likes+(liked?1:0),img=p.img?(String(p.img).startsWith('data:')?p.img:sampleImg(p.img)):null;
- return `<article class="panel post"><div class="post-h"><span class="av" style="background:${avColor(p.a)}">${initials(p.a)}</span><div style="min-width:0"><b>${esc(p.a)}</b><p class="small muted">${esc(p.sub)}</p></div></div>
+ return `<article class="panel post"><div class="post-h"><span class="av" style="background:${avColor(p.a)}">${initials(p.a)}</span><div style="min-width:0"><b>${esc(p.a)}</b><p class="small muted">${p.sub&&p.sub!=='Az önce'?esc(p.sub)+' · ':''}<time datetime="${new Date(paylasimZamani(p)).toISOString()}">${gecenZaman(paylasimZamani(p))}</time></p></div></div>
  ${p.x?`<p>${esc(p.x)}</p>`:''}${img?`<img src="${img}" alt="${esc(p.a)} paylaşımının fotoğrafı">`:''}
- <div class="post-f">${mine?`<span class="like">${ic('heart',20)}${n}</span><span class="small muted" style="font-weight:600">Her beğeni sana +2 puan</span>`:`<button class="like" data-act="like" data-v="${p.id}" aria-pressed="${liked}">${ic('heart',20)}${n}</button><span class="small muted" style="font-weight:600">${liked?`${esc(p.a.split(' ')[0])} +2 puan kazandı`:'Beğen, paylaşana +2 puan gitsin'}</span>`}</div></article>`}
+ <div class="post-f">${mine?`<span class="like">${ic('heart',20)}${n}</span><span class="small muted" style="font-weight:600;flex:1">Her beğeni sana +2 puan</span><button class="like" data-act="delpost" data-v="${p.id}" aria-label="Paylaşımı sil">${ic('trash',18)}Sil</button>`:`<button class="like" data-act="like" data-v="${p.id}" aria-pressed="${liked}">${ic('heart',20)}${n}</button><span class="small muted" style="font-weight:600">${liked?`${esc(p.a.split(' ')[0])} +2 puan kazandı`:'Beğen, paylaşana +2 puan gitsin'}</span>`}</div></article>`}
 function renderFeed(){
  const ben=USER||'Sen';
  return `<section class="panel composer"><h3 style="font-size:22px">Çevre için ne yaptın?</h3>
@@ -804,7 +852,8 @@ function renderFeed(){
   ${draftImg?`<img class="preview" src="${draftImg}" alt="Seçilen fotoğraf">`:''}
   <div class="row"><label class="btn sec" style="position:relative">${ic('camera',20)}${draftImg?'Fotoğrafı değiştir':'Fotoğraf ekle'}<input type="file" id="postImg" accept="image/*" style="position:absolute;opacity:0;width:1px;height:1px"></label>
   <button class="btn" data-act="post">${ic('send',20)}Paylaş</button></div></section>
- ${S.posts.map(p=>postHTML({...p,a:ben},true)).join('')}${SEEDPOSTS.map(p=>postHTML(p,false)).join('')}`;
+ ${[...S.posts.map(p=>({p:{...p,a:ben},mine:true})),...SEEDPOSTS.map(p=>({p,mine:false}))]
+   .sort((a,b)=>paylasimZamani(b.p)-paylasimZamani(a.p)).map(x=>postHTML(x.p,x.mine)).join('')}`;
 }
 function avHTML(name,me){return `<span class="av" style="background:${me?'var(--leaf)':avColor(name)}">${initials(name)}</span>`}
 function lbRow(i,name,pts,me,sub=''){return `<div class="lbr ${me?'me':''}"><span class="n">${i}</span>${avHTML(name,me)}<div style="min-width:0"><b>${esc(name)}</b>${sub?`<p class="small muted">${sub}</p>`:''}</div><b>${pts.toLocaleString('tr-TR')}</b></div>`}
@@ -835,7 +884,11 @@ function renderMe(){
   body=`<h3 style="font-size:22px">Yeşil Beceriler Rehberi</h3>${GUIDE.map(([h,p],i)=>`<details class="acc" ${i===0?'open':''}><summary>${h}</summary><p>${p}</p></details>`).join('')}`;
  } else {
   const r=S.rating;
-  body=`${SUNUCU?`<section class="panel"><div class="acct">${avHTML(USER,true)}<div style="flex:1;min-width:0"><p class="label">Hesap</p><b>${esc(USER)}</b></div><button class="btn sec" data-act="logout">${ic('out',18)}Çıkış yap</button></div><p class="small muted" style="font-weight:600">İlerlemen hesabına kaydediliyor. Başka bir cihazdan giriş yapınca kaldığın yerden devam edersin.</p></section>`:''}
+  body=`${SUNUCU?`<section class="panel"><div class="acct">${avHTML(USER,true)}<div style="flex:1;min-width:0"><p class="label">Hesap</p><b>${esc(USER)}</b></div><button class="btn sec" data-act="logout">${ic('out',18)}Çıkış yap</button></div><p class="small muted" style="font-weight:600">İlerlemen hesabına kaydediliyor. Başka bir cihazdan giriş yapınca kaldığın yerden devam edersin.</p>
+   <details class="acc"><summary>Hesabımı sil</summary><div class="field" style="padding-bottom:16px"><p class="small muted">Hesabın ve bütün ilerlemen kalıcı olarak silinir, geri alınamaz. Onaylamak için şifreni yaz.</p><label for="silSifre">Şifre</label><input type="password" id="silSifre" autocomplete="current-password"><p class="auth-err" id="silHata" role="alert"></p><button class="btn sec" data-act="delacct" style="color:var(--coral)">${ic('trash',18)}Hesabımı kalıcı olarak sil</button></div></details></section>`:''}
+  <section class="panel"><h3 style="font-size:22px">Fotoğrafların ve verilerin</h3>
+   <p class="small" style="font-weight:600">Görev fotoğrafın sadece kontrol için yapay zekâya (Google Gemini) gönderilir. Biz onu hiçbir yerde saklamayız. Google bu fotoğrafı kendi kullanım koşullarına göre işler.</p>
+   <p class="small muted" style="font-weight:600">Akışta paylaştığın fotoğraflar sadece bu cihazda durur. Paylaşımı "Sil" düğmesiyle istediğin zaman kaldırabilirsin.${SUNUCU?' Hesabında puanın, serin ve ayarların tutulur. Hesabını yukarıdan silebilirsin.':''}</p></section>
   <section class="panel"><h3 style="font-size:22px">Günlük hatırlatma</h3>
    <div class="field"><label for="ntime">Bildirim saati</label><input type="time" id="ntime" value="${S.notify}"></div>
    <label class="small" style="display:flex;gap:8px;align-items:center;font-weight:700"><input type="checkbox" id="non" ${S.notifyOn?'checked':''}> Serimi kaybetmemem için her gün hatırlat</label>
@@ -963,8 +1016,10 @@ document.addEventListener('click',e=>{
  if(a==='task'){openTask(v);return}
  if(a==='like'){const p=SEEDPOSTS.find(x=>x.id===v);S.liked[v]=!S.liked[v];if(S.liked[v])toast(`${p.a.split(' ')[0]} +2 puan kazandı`,'heart');commit();return}
  if(a==='post'){const txt=draft.trim();if(!txt&&!draftImg){toast('Paylaşmak için bir yazı ya da fotoğraf ekle','image');return}
-  const p={id:'u'+Date.now(),a:USER||'Sen',sub:'Az önce',x:txt,img:draftImg,likes:0};S.posts.unshift(p);S.posts=S.posts.slice(0,8);draft='';draftImg=null;commit();toast('Paylaşıldı','send');
+  const p={id:'u'+Date.now(),a:USER||'Sen',sub:'',t:simdi(),x:txt,img:draftImg,likes:0};S.posts.unshift(p);S.posts=S.posts.slice(0,8);draft='';draftImg=null;commit();toast('Paylaşıldı','send');
   ['Ayşe K.','Mert D.','Defne Ö.'].forEach((n,i)=>setTimeout(()=>{const q=S.posts.find(x=>x.id===p.id);if(!q)return;q.likes++;addPoints(2,`${n} paylaşımını beğendi`);commit()},2200+i*1700));return}
+ if(a==='delpost'){if(el.dataset.sure){S.posts=S.posts.filter(x=>x.id!==v);save();render();toast('Paylaşım silindi','trash')}else{el.dataset.sure=1;el.lastChild.textContent='Emin misin?';setTimeout(()=>{if(el.isConnected){delete el.dataset.sure;el.lastChild.textContent='Sil'}},3000)}return}
+ if(a==='delacct'){hesapSil();return}
  if(a==='lb'){lbtab=v;render();return}
  if(a==='ptab'){ptab=v;render();return}
  if(a==='cat'){shopCat=v;render();return}

@@ -36,11 +36,21 @@ export function cerezOku(req, ad) {
 
 export const gecerliJeton = t => typeof t === 'string' && /^[a-f0-9]{64}$/.test(t);
 
-// Oturum çerezindeki jetona bağlı kullanıcı anahtarını döndürür; yoksa null.
+// Oturum kaydı "kullanıcı anahtarı|hesabın oluşturulma zamanı" biçimindedir. Hesap silinip aynı adla
+// yeniden açılırsa eski hesabın diğer cihazlarda kalan oturumları yeni hesaba erişemez.
+export const oturumDegeri = (anahtar, olusturma) => `${anahtar}|${olusturma}`;
+
+// Oturum çerezindeki jetona bağlı kullanıcı anahtarını döndürür; geçersizse null.
 export async function oturumKullanici(req) {
   const jeton = cerezOku(req, 'oturum');
   if (!gecerliJeton(jeton)) return null;
-  return await redis('GET', 'oturum:' + jeton);
+  const deger = await redis('GET', 'oturum:' + jeton);
+  if (!deger) return null;
+  const [anahtar, olusturma] = String(deger).split('|');
+  const ham = await redis('GET', 'kullanici:' + anahtar);
+  let k = null;
+  try { k = ham ? JSON.parse(ham) : null; } catch { k = null; }
+  return k && String(k.olusturma) === olusturma ? anahtar : null;
 }
 
 export async function sifreOzeti(sifre, tuz) {
