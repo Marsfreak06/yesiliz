@@ -4,12 +4,13 @@
 //   POST /api/hesap { islem: 'cikis' }
 //   PUT  /api/hesap { durum }            → ilerlemeyi kaydeder
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import { dbVar, redis, cerezOku, gecerliJeton, oturumKullanici, oturumDegeri, sifreOzeti } from './_db.js';
+import { dbVar, redis, cerezOku, gecerliJeton, oturumKullanici, oturumDegeri, sifreOzeti, haftaNo } from './_db.js';
 
 // Oturum 180 gün sürer ve site her açıldığında yenilenir; düzenli kullanan bir daha şifre girmez.
 const OTURUM_SURESI = 60 * 60 * 24 * 180;
 const AD_KURALI = /^[a-zA-Z0-9_.çğıöşüÇĞİÖŞÜ]{3,20}$/;
 const EN_BUYUK_DURUM = 300_000;
+const HAFTALIK_PUAN_UST = 3000;
 
 function cevap(res, kod, veri) {
   res.setHeader('Cache-Control', 'no-store');
@@ -73,6 +74,13 @@ export default async function handler(req, res) {
       const metin = JSON.stringify(g.durum);
       if (metin.length > EN_BUYUK_DURUM) return cevap(res, 413, { hata: 'Kayıt çok büyük' });
       await redis('SET', 'durum:' + anahtar, metin);
+      // Haftalık puan şampiyonluk sıralamasına yazılır (sunum modunda gün kaydırılmışsa yazılmaz).
+      const d = g.durum;
+      if (!d.offset && Number(d.weekIdx) === haftaNo() && Number.isFinite(Number(d.week))) {
+        const k = `h:${haftaNo()}:puan`;
+        await redis('ZADD', k, Math.max(0, Math.min(HAFTALIK_PUAN_UST, Math.round(Number(d.week)))), anahtar);
+        await redis('EXPIRE', k, 60 * 86400);
+      }
       return cevap(res, 200, { tamam: true });
     }
 
@@ -94,8 +102,19 @@ export default async function handler(req, res) {
       if (!await denemeHakkiVar(req)) return cevap(res, 429, { hata: 'Çok fazla deneme yaptın. 15 dakika sonra tekrar dene.' });
       const ozet = await sifreOzeti(String(g.sifre || ''), k.tuz);
       if (!timingSafeEqual(Buffer.from(ozet, 'hex'), Buffer.from(k.ozet, 'hex'))) return cevap(res, 401, { hata: 'Şifre yanlış.' });
+      // Haritadaki fidanlar ve alanlar, arkadaşlıklar ve profil fotoğrafı da silinir.
+      for (const kayit of await redis('SMEMBERS', 'benim:' + anahtar)) {
+        const [tip, id] = String(kayit).split(':');
+        await redis('HDEL', tip === 'a' ? 'alanlar' : 'fidanlar', id);
+      }
+      for (const o of await redis('SMEMBERS', 'arkadas:' + anahtar)) await redis('SREM', 'arkadas:' + o, anahtar);
+      for (const o of await redis('SMEMBERS', 'giden:' + anahtar)) await redis('SREM', 'istekler:' + o, anahtar);
+      for (const o of await redis('SMEMBERS', 'istekler:' + anahtar)) await redis('SREM', 'giden:' + o, anahtar);
+      const h = haftaNo();
+      for (const t of ['fidan', 'alan', 'sulama', 'puan']) await redis('ZREM', `h:${h}:${t}`, anahtar);
       // Diğer cihazlardaki oturumlar, kullanıcı kaydı silindiği için geçersiz olur (bkz. oturumDegeri).
-      await redis('DEL', 'kullanici:' + anahtar, 'durum:' + anahtar, 'oturum:' + cerezOku(req, 'oturum'));
+      await redis('DEL', 'kullanici:' + anahtar, 'durum:' + anahtar, 'oturum:' + cerezOku(req, 'oturum'),
+        'benim:' + anahtar, 'arkadas:' + anahtar, 'giden:' + anahtar, 'istekler:' + anahtar, 'avatar:' + anahtar);
       cerezYaz(res, '', 0);
       return cevap(res, 200, { tamam: true });
     }

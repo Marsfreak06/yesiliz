@@ -1,5 +1,7 @@
 // Görev fotoğrafını Gemini'ye gösterip görevin yapılıp yapılmadığını sorar.
+import { randomBytes } from 'node:crypto';
 import { cevap, islem, gemini } from './_gemini.js';
+import { redis } from './_db.js';
 
 // Yedek modeller denenirken süre yetsin.
 export const config = { maxDuration: 60 };
@@ -28,10 +30,13 @@ const GOREVLER = {
   w_tohum: 'Saksıya ya da bahçeye tohum ekmek. Fotoğrafta tohum, ekilmiş toprak, saksı ya da yeni filizlenmiş bir bitki görünüyor mu?',
   w_kompost: 'Kompost kutusu başlatmak. Fotoğrafta kompost kutusu, toprak ve organik atık (kabuk, yaprak) görünüyor mu?',
   w_bahce: 'Okul bahçesinde atık toplamak ve ayrıştırmak. Fotoğrafta toplanmış çöp poşetleri, atık toplayan öğrenciler veya temizlenmiş bahçe görünüyor mu?',
+  fidan: 'Fidan dikmek. Fotoğrafta toprağa yeni dikilmiş bir fidan ya da küçük ağaç, fidan diken biri veya fidan dikimi için kazılmış toprak görünüyor mu?',
+  temizlik: 'Açık bir alanda çöp toplamak. Fotoğrafta toplanmış çöp torbaları, çöp toplayan biri ya da çöpten temizlenmiş bir alan görünüyor mu?',
 };
+const HARITA_GOREVLERI = new Set(['fidan', 'temizlik']);
 
 export default function handler(req, res) {
-  return islem(req, res, 'dogrula', 60, async (istek, ayar) => {
+  return islem(req, res, 'dogrula', 60, async (istek, ayar, kullanici) => {
     const gorev = String(istek.task || '');
     if (!Object.hasOwn(GOREVLER, gorev)) return cevap(res, 400, { hata: 'Bilinmeyen görev' });
     const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(String(istek.image || ''));
@@ -70,10 +75,19 @@ export default function handler(req, res) {
     try { sonuc = JSON.parse(metin); } catch { sonuc = null; }
     if (!sonuc || typeof sonuc.onay !== 'boolean') return cevap(res, 502, { hata: 'Gemini yanıtı anlaşılamadı' });
 
+    // Haritaya eklenen fidan ve temizlik alanları için tek kullanımlık, 30 dakika geçerli jeton.
+    // Harita uç noktası bu jeton olmadan ekleme kabul etmez; fotoğrafın kendisi saklanmaz.
+    let jeton;
+    if (sonuc.onay && kullanici && HARITA_GOREVLERI.has(gorev)) {
+      jeton = randomBytes(24).toString('hex');
+      await redis('SET', 'dogrulama:' + jeton, `${kullanici}|${gorev}`, 'EX', 1800);
+    }
+
     cevap(res, 200, {
       onay: sonuc.onay,
       guven: Math.max(0, Math.min(1, Number(sonuc.guven) || 0)),
       gerekce: String(sonuc.gerekce || '').slice(0, 300),
+      ...(jeton ? { jeton } : {}),
     });
   });
 }

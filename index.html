@@ -67,8 +67,9 @@ p{margin:0}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chip.warn{color:var(--sun)}}
 .bar{height:12px;border-radius:99px;background:var(--soft);overflow:hidden}
 .bar i{display:block;height:100%;border-radius:inherit;background:var(--leaf)}
-.seg{display:flex;gap:4px;background:var(--soft);padding:4px;border-radius:16px}
-.seg button{flex:1;border:0;background:none;padding:9px 6px;border-radius:12px;font-weight:800;font-size:14.5px;color:var(--muted)}
+.seg{display:flex;gap:4px;background:var(--soft);padding:4px;border-radius:16px;overflow-x:auto;scrollbar-width:none}
+button.chip{border:0;cursor:pointer;font-family:inherit}
+.seg button{flex:1 0 auto;white-space:nowrap;border:0;background:none;padding:9px 6px;border-radius:12px;font-weight:800;font-size:14.5px;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 2px 0 var(--line)}
 .sec-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px}
 .sec-h h2{font-size:24px}
@@ -85,8 +86,8 @@ p{margin:0}
 .pill.pts{color:var(--leaf-ink)}
 .pill svg{width:20px;height:20px}
 .view{display:flex;flex-direction:column;gap:18px}
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:2px solid var(--line);padding:6px 6px calc(8px + env(safe-area-inset-bottom,0px))}
-.tabbar button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:800;color:var(--muted);padding:6px 0;border-radius:14px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(6,1fr);background:var(--surface);border-top:2px solid var(--line);padding:6px 6px calc(8px + env(safe-area-inset-bottom,0px))}
+.tabbar button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:800;color:var(--muted);padding:6px 0;border-radius:14px}
 .tabbar button svg{width:26px;height:26px}
 .tabbar button[aria-current="page"]{color:var(--leaf-ink);background:var(--soft)}
 .fab{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:19;display:flex;align-items:center;gap:8px;background:var(--sky);color:#fff;border:0;border-radius:99px;padding:12px 18px 12px 14px;font-weight:800;box-shadow:0 4px 0 var(--sky-d)}
@@ -295,6 +296,67 @@ input:focus,textarea:focus{outline:none;border-color:var(--leaf)}
 .auth-err{color:var(--coral);font-weight:800;min-height:1.5em}
 .auth-hint{text-align:center;color:var(--muted);font-size:14px;font-weight:600}
 
+/* Avatars with profile photo */
+.av{position:relative;overflow:hidden}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.me-av{position:relative;width:76px;height:76px;flex:none;cursor:pointer}
+.me-av .av{width:76px;height:76px;font-size:26px}
+.me-av .cam{position:absolute;right:-4px;bottom:-4px;width:30px;height:30px;border-radius:50%;background:var(--sky);color:#fff;display:grid;place-items:center;border:3px solid var(--bg)}
+.me-av input{position:absolute;opacity:0;width:1px;height:1px}
+
+/* Map */
+.harita-ust{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.harita{height:min(64vh,560px);min-height:340px;border-radius:24px;border:2px solid var(--line);box-shadow:0 4px 0 var(--line);overflow:hidden;position:relative;background:var(--soft);z-index:0}
+.harita .leaflet-container{font-family:var(--body);background:var(--soft)}
+.harita-not{pointer-events:none;position:absolute;left:58px;right:12px;top:12px;z-index:500;background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:10px 14px;font-weight:800;display:flex;gap:10px;align-items:center;box-shadow:0 4px 0 var(--line)}
+.harita-yukleniyor{display:grid;place-items:center;height:100%;color:var(--muted);font-weight:800}
+.fd-ikon{width:38px;height:38px;border-radius:50% 50% 50% 6px;transform:rotate(-45deg);display:grid;place-items:center;background:var(--leaf);border:3px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.fd-ikon svg{transform:rotate(45deg);color:#fff}
+.fd-ikon.susuz{background:#F29A2E}
+.fd-ikon.taslak{background:var(--sky)}
+.fd-ikon.benim{border-color:var(--sun)}
+.leaflet-popup-content-wrapper{border-radius:18px!important;border:2px solid var(--line);box-shadow:0 4px 0 var(--line)!important;background:var(--surface)!important;color:var(--ink)!important}
+.leaflet-popup-tip{background:var(--surface)!important}
+.leaflet-popup-content{margin:14px 16px!important;font-size:14.5px!important;line-height:1.45!important;min-width:200px}
+.pp-baslik{font-family:var(--display);font-size:20px;font-weight:800;line-height:1.1;margin-bottom:4px}
+.pp-satir{display:flex;gap:6px;align-items:center;color:var(--muted);font-weight:700;margin-top:3px}
+.pp-satir svg{flex:none;color:var(--leaf-ink)}
+.pp-dugmeler{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.pp-dugmeler .btn{padding:8px 12px;font-size:14px;border-radius:12px}
+.harita-ozet{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.harita-ozet div{background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:10px 4px}
+.harita-ozet b{display:block;font-family:var(--display);font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
+.harita-ozet span{font-size:12px;color:var(--muted);font-weight:800}
+.lejant{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;font-weight:700;color:var(--muted)}
+.lejant i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.ekip-sec{display:flex;flex-wrap:wrap;gap:6px}
+.ekip-sec label{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--line);border-radius:99px;padding:5px 12px;font-weight:800;font-size:14px;cursor:pointer}
+.ekip-sec input{accent-color:var(--leaf)}
+.tur-sec{display:flex;flex-wrap:wrap;gap:6px}
+.tur-sec button{border:2px solid var(--line);background:var(--surface);border-radius:99px;padding:5px 12px;font-weight:800;font-size:14px}
+.tur-sec button[aria-pressed="true"]{border-color:var(--leaf);background:color-mix(in srgb,var(--leaf) 14%,var(--surface));color:var(--leaf-ink)}
+
+/* Champions */
+.sampiyon{display:flex;gap:14px;align-items:center;border-radius:24px;padding:16px;background:linear-gradient(135deg,var(--sun),#FFD96A);color:var(--sun-ink);box-shadow:0 5px 0 var(--sun-d)}
+.sampiyon .av{width:62px;height:62px;font-size:22px;border-color:#fff}
+.sampiyon h3{font-size:24px}
+.kategoriler{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kategori{display:flex;flex-direction:column;gap:8px}
+.kategori h4{display:flex;align-items:center;gap:8px;font-size:18px}
+.kategori ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+.kategori li{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.kategori li span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kategori li.ben{color:var(--leaf-ink)}
+@media (max-width:420px){.kategoriler{grid-template-columns:1fr}}
+
+/* Friends */
+.ark-satir{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:2px solid var(--soft)}
+.ark-satir:last-child{border-bottom:0}
+.ark-satir b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.ark-satir .btn{padding:7px 12px;font-size:14px;border-radius:12px}
+.ark-ekle{display:flex;gap:8px}
+.ark-ekle input{flex:1;min-width:0}
+
 /* Toasts, celebration, confetti */
 .toasts{position:fixed;left:12px;right:12px;bottom:calc(92px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;align-items:center;z-index:60;pointer-events:none}
 @media (min-width:920px){.toasts{bottom:24px}}
@@ -415,6 +477,14 @@ const IC={
 IC.out='<path d="M14 4h5v16h-5"/><path d="M10 8l-4 4 4 4M6 12h10"/>';
 IC.wrench='<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>';
 IC.trash='<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>';
+IC.map='<path d="M9 4L3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/>';
+IC.pin='<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>';
+IC.sapling='<path d="M12 21v-9"/><path d="M12 13c-4 0-6-2.5-6-6 4 0 6 2.5 6 6zM12 11c0-3.5 2-6 6-6 0 3.5-2 6-6 6z"/><path d="M8 21h8"/>';
+IC.area='<path d="M4 7l6-3 10 4-2 11-12 1z"/><circle cx="4" cy="7" r="1.6"/><circle cx="10" cy="4" r="1.6"/><circle cx="20" cy="8" r="1.6"/><circle cx="18" cy="19" r="1.6"/><circle cx="6" cy="20" r="1.6"/>';
+IC.locate='<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>';
+IC.undo='<path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>';
+IC.clock='<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>';
+IC.userplus='<circle cx="9" cy="8" r="4"/><path d="M2 21c1-4 4-6 7-6s6 2 7 6M19 8v6M16 11h6"/>';
 IC.plug='<path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5"/>';
 IC.paper='<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/>';
 IC.bread='<path d="M5 10a4 4 0 0 1 2-7.5h10A4 4 0 0 1 19 10v10H5z"/><path d="M9 8v3M12 7v3M15 8v3"/>';
@@ -467,6 +537,8 @@ const TASKS=[
  {id:'w_pil',w:1,t:'Atık pilleri topla',d:'Evdeki biten pilleri topla ve okuldaki atık pil kutusuna at. Pilleri fotoğrafla.',p:100,chk:'detail',ic:'battery'},
  {id:'w_onarim',w:1,t:'Bozuk bir eşyayı onar',d:'Atmak üzere olduğun bir eşyayı onar: oyuncak, kalemlik, kopan bir düğme ya da sökük. Onardığın eşyayı fotoğrafla.',p:110,chk:'detail',ic:'wrench'},
  {id:'w_tohum',w:1,t:'Tohum ek',d:'Bir saksıya ya da bahçeye tohum ek ve filizlenmesini takip et. Ektiğin yeri fotoğrafla.',p:110,chk:'plant',ic:'leaf'},
+ {id:'fidan',w:1,harita:'fidan',t:'Fidan dik, haritaya ekle',d:'Bir fidan dik, fotoğrafını doğrulat ve diktiğin yeri haritaya işaretle. Herkes fidanını görüp sulayabilir.',p:150,chk:'plant',ic:'sapling'},
+ {id:'temizlik',w:1,harita:'alan',t:'Bir alanı çöpten temizle',d:'Park, sahil ya da okul bahçesi gibi bir yerde çöp topla, fotoğrafını doğrulat ve temizlediğin alanı haritada çiz.',p:120,chk:'recycle',ic:'area'},
  {id:'w_kompost',w:1,t:'Kompost kutusu başlat',d:'Meyve-sebze kabuklarından okulda ya da evde kompost başlat.',p:120,chk:'plant',ic:'leaf'},
  {id:'w_bahce',w:1,t:'Okul bahçesi temizliği',d:'Arkadaşlarınla bahçedeki atıkları topla ve ayrıştır.',p:150,chk:'recycle',ic:'users'}
 ];
@@ -568,7 +640,7 @@ async function sunucuyaKaydet(){
 addEventListener('pagehide',()=>{if(SUNUCU&&kayitZamani){clearTimeout(kayitZamani);try{fetch('api/hesap',{method:'PUT',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({durum:sunucuKopyasi()})})}catch(e){}}});
 function hazirla(){if(S.weekIdx===null)S.weekIdx=weekIdx();if(!S.seenBadges.length)S.seenBadges=BADGES.filter(b=>b.ok(S)).map(b=>b.id)}
 
-let tab='home',ptab='dostu',lbtab='week',shopCat='hat',draft='',draftImg=null,authMod='giris';
+let tab='home',ptab='dostu',lbtab='samp',shopCat='hat',draft='',draftImg=null,authMod='giris';
 let chatLog=[{me:0,t:'Merhaba! Ben Yaprak, mini iklim asistanın. Ne merak ediyorsun?'}];
 
 async function boot(){
@@ -587,7 +659,9 @@ function oturumBasla(j){
  const yerel=yereldenOku(yerelAnahtar());
  S=normalize(j.durum)||yerel||BOS();
  if(yerel){const resim=new Map(yerel.posts.map(p=>[p.id,p.img]));S.posts.forEach(p=>{if(!p.img&&resim.get(p.id))p.img=resim.get(p.id)})}
+ ARK=null;SAMP=null;sampZaman=0;H.veri=null;H.mod=null;H.taslak=null;
  hazirla();yereleYaz();uygulamaGoster();
+ arkadaslariGetir(false).then(()=>{if(ARK&&ARK.istekler.length)toast(`${ARK.istekler.length} yeni arkadaşlık isteğin var (Profil → Arkadaşlar)`,'users')});
 }
 function authGoster(){closeSheet();$('#shell').hidden=true;$('#auth').hidden=false;authModu(authMod);setTimeout(()=>$('#aAd').focus(),50)}
 function uygulamaGoster(){$('#auth').hidden=true;$('#shell').hidden=false;renderNav();render()}
@@ -624,11 +698,11 @@ async function hesapSil(){
   if(!r.ok){hata.textContent=j.hata||'Hesap silinemedi, tekrar dene.';return}
  }catch(e){hata.textContent='Sunucuya ulaşılamadı.';return}
  try{localStorage.removeItem(yerelAnahtar())}catch(e){}
- clearTimeout(kayitZamani);kayitZamani=null;USER=null;S=BOS();tab='home';authModu('giris');authGoster();toast('Hesabın ve verilerin silindi','trash');
+ clearTimeout(kayitZamani);kayitZamani=null;USER=null;S=BOS();tab='home';ARK=null;SAMP=null;H.veri=null;authModu('giris');authGoster();toast('Hesabın ve verilerin silindi','trash');
 }
 async function cikisYap(){
  try{await fetch('api/hesap',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({islem:'cikis'})})}catch(e){}
- clearTimeout(kayitZamani);kayitZamani=null;USER=null;S=BOS();tab='home';authModu('giris');authGoster();
+ clearTimeout(kayitZamani);kayitZamani=null;USER=null;S=BOS();tab='home';ARK=null;SAMP=null;H.veri=null;authModu('giris');authGoster();
 }
 
 /* ---------- oyun mantığı ---------- */
@@ -662,7 +736,8 @@ function checkBadges(){BADGES.forEach(b=>{if(b.ok(S)&&!S.seenBadges.includes(b.i
 function commit(){checkBadges();save();render()}
 function dailyTasks(){return shuffle(TASKS.filter(t=>!t.w),rng(hash(today()+'t'))).slice(0,4)}
 // Her hafta haftalık görevlerden 3'ü dönüşümlü gösterilir.
-function weeklyTasks(){return shuffle(TASKS.filter(t=>t.w),rng(hash('hafta'+weekIdx()))).slice(0,3)}
+// Haritalı görevler (fidan, temizlik) her hafta sabit; diğer haftalık görevlerden 2'si dönüşümlü gelir.
+function weeklyTasks(){return [...TASKS.filter(t=>t.harita),...shuffle(TASKS.filter(t=>t.w&&!t.harita),rng(hash('hafta'+weekIdx()))).slice(0,2)]}
 const doneList=k=>S.done[k]||(S.done[k]=[]);
 const isDone=t=>doneList(t.w?'w'+weekIdx():today()).includes(t.id);
 function todaysQuiz(){const r=rng(hash(today()+'q'));return shuffle(QUIZ,r).slice(0,5).map(q=>{const order=shuffle([0,1,2,3],r);return{q:q.q,e:q.e,o:order.map(i=>q.o[i]),a:order.indexOf(q.a)}})}
@@ -803,6 +878,8 @@ function renderHome(){
  <div class="tiles">
   <button class="tile" data-act="tab" data-v="tasks"><span class="ti c-plant">${ic('camera',26)}</span><b>Görevler</b><span class="chip ${dc?'ok':''}">${dc}/${dl.length} bugün</span></button>
   <button class="tile" data-act="quiz"><span class="ti c-recycle">${ic('quiz',26)}</span><b>Günlük quiz</b><span class="chip ${qz?'ok':'warn'}">${qz?qz.score+'/5 doğru':'5 soru bekliyor'}</span></button>
+  <button class="tile" data-act="tab" data-v="harita"><span class="ti c-plant">${ic('map',26)}</span><b>Yeşil Harita</b><span class="chip">Fidan dik, sula</span></button>
+  <button class="tile" data-act="sampgit"><span class="ti c-detail">${ic('trophy',26)}</span><b>Şampiyonlar</b><span class="chip warn">Haftanın yarışı</span></button>
  </div>
  <section aria-label="Günün sözü">
   <p class="label" style="margin-bottom:8px">Günün ${q.k==='Söz'?'sözü':q.k==='Bilgi'?'bilgisi':'mesajı'}</p>
@@ -855,23 +932,50 @@ function renderFeed(){
  ${[...S.posts.map(p=>({p:{...p,a:ben},mine:true})),...SEEDPOSTS.map(p=>({p,mine:false}))]
    .sort((a,b)=>paylasimZamani(b.p)-paylasimZamani(a.p)).map(x=>postHTML(x.p,x.mine)).join('')}`;
 }
-function avHTML(name,me){return `<span class="av" style="background:${me?'var(--leaf)':avColor(name)}">${initials(name)}</span>`}
+// Gerçek kullanıcı adlarında profil fotoğrafı denenir; yoksa baş harfler görünür.
+const gercekKullanici=n=>SUNUCU&&/^[a-zA-Z0-9_.çğıöşüÇĞİÖŞÜ]{3,20}$/.test(n||'');
+function avHTML(name,me){
+ const img=gercekKullanici(name)?`<img src="api/sosyal?avatar=${encodeURIComponent(name)}${name===USER?'&v='+AVV:''}" alt="" loading="lazy" onerror="this.remove()">`:'';
+ return `<span class="av" style="background:${me?'var(--leaf)':avColor(name)}">${initials(name)}${img}</span>`;
+}
 function lbRow(i,name,pts,me,sub=''){return `<div class="lbr ${me?'me':''}"><span class="n">${i}</span>${avHTML(name,me)}<div style="min-width:0"><b>${esc(name)}</b>${sub?`<p class="small muted">${sub}</p>`:''}</div><b>${pts.toLocaleString('tr-TR')}</b></div>`}
 function podium(rows){const top=rows.slice(0,3);return `<div class="podium">${[1,0,2].map(i=>{const r=top[i];if(!r)return '<div></div>';return `<div class="pod p${i+1} ${r.me?'me':''}">${avHTML(r.n,r.me)}<b>${esc(r.n)}</b><span class="pts">${r.p.toLocaleString('tr-TR')}</span><div class="blk">${i+1}</div></div>`}).join('')}</div>`}
 function renderLig(){
  const ben=USER||'Sen';
- const seg=`<div class="seg" role="group">${[['week','Haftalık lig'],['all','Genel'],['school','Okullar']].map(([k,l])=>`<button data-act="lb" data-v="${k}" aria-pressed="${lbtab===k}">${l}</button>`).join('')}</div>`;
+ const seg=`<div class="seg" role="group">${[['samp','Şampiyonlar'],['week','Haftalık lig'],['school','Okullar']].map(([k,l])=>`<button data-act="lb" data-v="${k}" aria-pressed="${lbtab===k}">${l}</button>`).join('')}</div>`;
+ const kalan=7-((idxOf(today())+3)%7);
+ if(lbtab==='samp'){
+  if(!SUNUCU)return seg+`<section class="panel"><p class="muted" style="font-weight:600">Haftalık şampiyonlar, hesapla giriş yapan herkesin fidan, temizlik, sulama ve puanlarından hesaplanır.</p></section>`;
+  sampiyonlariGetir();
+  if(!SAMP)return seg+`<p class="muted" style="font-weight:700">Şampiyonlar yükleniyor…</p>`;
+  const h=SAMP.hafta,b=h.ben||{};
+  const kat=(baslik,ikon,liste,birim,deger)=>`<section class="panel kategori"><h4>${ic(ikon,20)}${baslik}</h4>${liste.length?`<ol>${liste.slice(0,5).map((x,i)=>`<li class="${x.ad===USER?'ben':''}"><span>${i+1}. ${esc(x.ad)}</span><span>${x.s.toLocaleString('tr-TR')} ${birim}</span></li>`).join('')}</ol>`:'<p class="small muted">Bu hafta henüz kimse yok. İlk sen ol!</p>'}<p class="small muted" style="font-weight:800">Sen: ${(deger||0).toLocaleString('tr-TR')} ${birim}</p></section>`;
+  return seg+`
+  ${SAMP.gecen.length?`<section class="sampiyon">${avHTML(SAMP.gecen[0].ad)}<div style="min-width:0"><p class="label" style="color:inherit;opacity:.8">Geçen haftanın şampiyonu</p><h3>${esc(SAMP.gecen[0].ad)}</h3>${SAMP.gecen.length>1?`<p class="small" style="font-weight:800">${SAMP.gecen.slice(1).map((x,i)=>`${i+2}. ${esc(x.ad)}`).join(' · ')}</p>`:''}</div></section>`:''}
+  <section class="panel"><div class="sec-h" style="margin:0"><h2>Bu haftanın yarışı</h2><span class="chip warn">${kalan} gün kaldı</span></div>
+   ${h.fuzyon.length?podium(h.fuzyon.map(x=>({n:x.ad,p:x.s,me:x.ad===USER}))):'<p class="muted" style="font-weight:600">Bu hafta henüz şampiyonluk puanı yok. Fidan dik, alan temizle, fidan sula!</p>'}
+   <p class="small" style="font-weight:800">Senin sıran: ${b.sira?b.sira+'.':'henüz yok'} · ${(b.skor||0).toLocaleString('tr-TR')} şampiyonluk puanı</p>
+   <p class="small muted" style="font-weight:600">Şampiyonluk puanı = fidan × 100 + temizlenen m² ÷ 10 + sulama × 25 + haftalık puan ÷ 10. Her pazartesi yeni hafta başlar.</p></section>
+  ${h.fuzyon.length>3?`<div class="lb">${h.fuzyon.slice(3).map((x,i)=>lbRow(i+4,x.ad,x.s,x.ad===USER)).join('')}</div>`:''}
+  <div class="kategoriler">${kat('Fidan','sapling',h.fidan,'fidan',b.fidan)}${kat('Temizlik','area',h.alan,'m²',b.alan)}${kat('Sulama','drop',h.sulama,'kez',b.sulama)}${kat('Puan','star',h.puan,'puan',b.puan)}</div>`;
+ }
+ if(lbtab==='week'&&SUNUCU){
+  sampiyonlariGetir();
+  const rows=(SAMP?SAMP.hafta.puan:[]).map(x=>({n:x.ad,p:x.s,me:x.ad===USER}));
+  if(!rows.some(r=>r.me))rows.push({n:ben,p:S.week,me:1});
+  rows.sort((a,b)=>b.p-a.p);
+  return seg+`<section class="panel"><div class="sec-h" style="margin:0"><h2>Haftalık puan ligi</h2><span class="chip warn">${kalan} gün sonra sıfırlanır</span></div><p class="small muted" style="font-weight:600">Bu hafta görev, quiz, fidan ve sulamadan en çok puan toplayanlar. İlk 10 gösterilir.</p>${podium(rows)}</section><div class="lb">${rows.slice(3).map((r,i)=>lbRow(i+4,r.n,r.p,r.me)).join('')}</div>`;
+ }
  if(lbtab==='week'){
-  const rows=[...LEAGUE.map(([n,p])=>({n,p})),{n:ben,p:S.week,me:1}].sort((a,b)=>b.p-a.p);const left=7-((idxOf(today())+3)%7);
+  const rows=[...LEAGUE.map(([n,p])=>({n,p})),{n:ben,p:S.week,me:1}].sort((a,b)=>b.p-a.p);const left=kalan;
   let h='';rows.forEach((r,i)=>{if(i<3)return;if(i===3)h+='<p class="zone">Güvenli bölge</p>';if(i===rows.length-3)h+='<p class="zone down">Düşme bölgesi</p>';h+=lbRow(i+1,r.n,r.p,r.me,r.me?rankOf(curStreak())[1]:'')});
   return seg+`<section class="panel"><div class="sec-h" style="margin:0"><h2>Altın Lig</h2><span class="chip warn">${left} gün sonra sıfırlanır</span></div><div class="tiers">${['Bronz','Gümüş','Altın','Zümrüt','Elmas'].map(t=>`<span class="tier ${t==='Altın'?'cur':''}">${t}</span>`).join('')}</div><p class="small muted" style="font-weight:600">İlk 3 Zümrüt Lig'e yükselir, son 3 Gümüş Lig'e düşer. Puanlar her pazartesi sıfırlanır.</p>${podium(rows)}</section><div class="lb">${h}</div>`}
- if(lbtab==='all'){const rows=[...ALLTIME.map(([n,p])=>({n,p})),{n:ben,p:S.earned,me:1}].sort((a,b)=>b.p-a.p);return seg+`<section class="panel">${podium(rows)}</section><div class="lb">${rows.slice(3).map((r,i)=>lbRow(i+4,r.n,r.p,r.me)).join('')}</div>`}
  const rows=SCHOOLS.map(s=>({n:s[0],p:s[1]+(s[2]?S.earned:0),me:!!s[2]})).sort((a,b)=>b.p-a.p);
  return seg+`<p class="small muted" style="font-weight:600">Okulundaki herkesin puanı okul skoruna eklenir.</p><div class="lb">${rows.map((r,i)=>lbRow(i+1,r.n,r.p,r.me,r.me?'Senin okulun':'')).join('')}</div>`;
 }
 function renderMe(){
  const st=curStreak(),nb=BADGES.filter(b=>b.ok(S)).length,ad=USER||'Filiz';
- const seg=`<div class="seg" role="group">${[['dostu','Mağaza'],['rozet','Rozetler'],['rehber','Rehber'],['ayar','Ayarlar']].map(([k,l])=>`<button data-act="ptab" data-v="${k}" aria-pressed="${ptab===k}">${l}</button>`).join('')}</div>`;
+ const seg=`<div class="seg" role="group">${[['dostu','Mağaza'],['rozet','Rozetler'],['ark','Arkadaşlar'+(ARK&&ARK.istekler.length?` (${ARK.istekler.length})`:'')],['rehber','Rehber'],['ayar','Ayarlar']].map(([k,l])=>`<button data-act="ptab" data-v="${k}" aria-pressed="${ptab===k}">${l}</button>`).join('')}</div>`;
  let body='';
  if(ptab==='dostu'){
   body=`<div class="seg" role="group">${CATS.map(([k,l])=>`<button data-act="cat" data-v="${k}" aria-pressed="${shopCat===k}">${l}</button>`).join('')}</div>
@@ -880,6 +984,16 @@ function renderMe(){
   <p class="small muted" style="font-weight:600">Puanlarını Filiz için harca. Bugün görev yaptığında Filiz uyanık ve mutlu olur, beklerken uykuya dalar.</p>`;
  } else if(ptab==='rozet'){
   body=`<div class="badges">${BADGES.map(b=>{const ok=b.ok(S),[a,t]=b.pr(S);return `<div class="badge ${ok?'':'locked'}"><span class="medal">${ic(ok?b.ic:'lock',30)}</span><b>${b.n}</b><span>${ok?'Kazanıldı':b.r}</span>${ok?'':`<div class="bar"><i style="width:${Math.round(a/t*100)}%"></i></div><span>${a.toLocaleString('tr-TR')}/${t.toLocaleString('tr-TR')}</span>`}</div>`}).join('')}</div>`;
+ } else if(ptab==='ark'){
+  if(!SUNUCU)body=`<section class="panel"><p class="muted" style="font-weight:600">Arkadaş eklemek için hesapla giriş yapmalısın.</p></section>`;
+  else{
+   if(ARK===null)arkadaslariGetir(true);
+   const a=ARK||{arkadaslar:[],istekler:[],giden:[]};
+   body=`<section class="panel"><h3 style="font-size:22px">Arkadaş ekle</h3><form class="ark-ekle" id="arkForm"><input type="text" id="arkAd" placeholder="Kullanıcı adı" autocapitalize="none" spellcheck="false" maxlength="20" aria-label="Arkadaşının kullanıcı adı"><button class="btn">${ic('userplus',18)}Ekle</button></form><p class="small muted" style="font-weight:600">Arkadaşının Yeşiliz kullanıcı adını yaz. İsteğini kabul edince fidan dikerken ve alan temizlerken birbirinizi etiketleyebilirsiniz.</p></section>
+   ${a.istekler.length?`<section class="panel"><h3 style="font-size:20px">Gelen istekler</h3>${a.istekler.map(x=>`<div class="ark-satir">${avHTML(x.ad)}<b>${esc(x.ad)}</b><button class="btn" data-act="arkKabul" data-v="${esc(x.ad)}">Kabul et</button><button class="btn sec" data-act="arkReddet" data-v="${esc(x.ad)}">Reddet</button></div>`).join('')}</section>`:''}
+   <section class="panel"><h3 style="font-size:20px">Arkadaşların (${a.arkadaslar.length})</h3>${ARK===null?'<p class="muted">Yükleniyor…</p>':a.arkadaslar.length?a.arkadaslar.map(x=>`<div class="ark-satir">${avHTML(x.ad)}<b>${esc(x.ad)}</b><button class="btn sec" data-act="arkCikar" data-v="${esc(x.ad)}">Çıkar</button></div>`).join(''):'<p class="small muted" style="font-weight:600">Henüz arkadaşın yok. Yukarıdan ekleyebilirsin.</p>'}</section>
+   ${a.giden.length?`<section class="panel"><h3 style="font-size:20px">Gönderdiğin istekler</h3>${a.giden.map(x=>`<div class="ark-satir">${avHTML(x.ad)}<b>${esc(x.ad)}</b><span class="chip">Bekliyor</span><button class="btn sec" data-act="arkReddet" data-v="${esc(x.ad)}">Geri çek</button></div>`).join('')}</section>`:''}`;
+  }
  } else if(ptab==='rehber'){
   body=`<h3 style="font-size:22px">Yeşil Beceriler Rehberi</h3>${GUIDE.map(([h,p],i)=>`<details class="acc" ${i===0?'open':''}><summary>${h}</summary><p>${p}</p></details>`).join('')}`;
  } else {
@@ -887,8 +1001,10 @@ function renderMe(){
   body=`${SUNUCU?`<section class="panel"><div class="acct">${avHTML(USER,true)}<div style="flex:1;min-width:0"><p class="label">Hesap</p><b>${esc(USER)}</b></div><button class="btn sec" data-act="logout">${ic('out',18)}Çıkış yap</button></div><p class="small muted" style="font-weight:600">İlerlemen hesabına kaydediliyor. Başka bir cihazdan giriş yapınca kaldığın yerden devam edersin.</p>
    <details class="acc"><summary>Hesabımı sil</summary><div class="field" style="padding-bottom:16px"><p class="small muted">Hesabın ve bütün ilerlemen kalıcı olarak silinir, geri alınamaz. Onaylamak için şifreni yaz.</p><label for="silSifre">Şifre</label><input type="password" id="silSifre" autocomplete="current-password"><p class="auth-err" id="silHata" role="alert"></p><button class="btn sec" data-act="delacct" style="color:var(--coral)">${ic('trash',18)}Hesabımı kalıcı olarak sil</button></div></details></section>`:''}
   <section class="panel"><h3 style="font-size:22px">Fotoğrafların ve verilerin</h3>
-   <p class="small" style="font-weight:600">Görev fotoğrafın sadece kontrol için yapay zekâya (Google Gemini) gönderilir. Biz onu hiçbir yerde saklamayız. Google bu fotoğrafı kendi kullanım koşullarına göre işler.</p>
-   <p class="small muted" style="font-weight:600">Akışta paylaştığın fotoğraflar sadece bu cihazda durur. Paylaşımı "Sil" düğmesiyle istediğin zaman kaldırabilirsin.${SUNUCU?' Hesabında puanın, serin ve ayarların tutulur. Hesabını yukarıdan silebilirsin.':''}</p></section>
+   <p class="small" style="font-weight:600">Görev, fidan ve temizlik fotoğrafların sadece kontrol için yapay zekâya (Google Gemini) gönderilir. Biz onları hiçbir yerde saklamayız. Google bu fotoğrafları kendi kullanım koşullarına göre işler.</p>
+   <p class="small muted" style="font-weight:600">Akışta paylaştığın fotoğraflar sadece bu cihazda durur. Paylaşımı "Sil" düğmesiyle istediğin zaman kaldırabilirsin.${SUNUCU?' Hesabında puanın, serin, ayarların ve arkadaş listen tutulur.':''}</p>
+   ${SUNUCU?`<p class="small muted" style="font-weight:600">Herkese açık olanlar: kullanıcı adın, profil fotoğrafın, haftalık sıralamadaki puanların ve haritaya eklediğin fidanlar ile temizlik alanları (konumu, tarihi ve kimlerle yaptığınla birlikte). Haritadaki kayıtlarını işaretine dokunup silebilirsin. Hesabını silersen bunların hepsi silinir.</p>
+   <button class="btn sec" data-act="avsil">${ic('camera',18)}Profil fotoğrafımı kaldır</button>`:''}</section>
   <section class="panel"><h3 style="font-size:22px">Günlük hatırlatma</h3>
    <div class="field"><label for="ntime">Bildirim saati</label><input type="time" id="ntime" value="${S.notify}"></div>
    <label class="small" style="display:flex;gap:8px;align-items:center;font-weight:700"><input type="checkbox" id="non" ${S.notifyOn?'checked':''}> Serimi kaybetmemem için her gün hatırlat</label>
@@ -900,11 +1016,11 @@ function renderMe(){
    <button class="btn" data-act="rate" ${r&&r.stars?'':'disabled'}>Gönder</button>`}</section>`;
  }
  return `<section class="stage" style="${sahneZemini(S.eq.bg)}">${mascot(S.eq,{mood:mutluMu()?'happy':'sleepy'})}</section>
- <div class="stage-info"><div class="nameplate"><p class="label">Seri Dostun Filiz · ${esc(S.duo.name)} ile ortak</p><h2>${esc(ad)}</h2></div><span class="chip warn">${ic('trophy',14)}${rankOf(st)[1]}</span></div>
+ <div class="stage-info"><div style="display:flex;gap:12px;align-items:center;min-width:0">${SUNUCU?`<label class="me-av" title="Profil fotoğrafını değiştir">${avHTML(USER,true)}<span class="cam">${ic('camera',16)}</span><input type="file" id="avatarImg" accept="image/*" aria-label="Profil fotoğrafı yükle"></label>`:''}<div class="nameplate"><p class="label">Seri Dostun Filiz · ${esc(S.duo.name)} ile ortak</p><h2>${esc(ad)}</h2></div></div><span class="chip warn">${ic('trophy',14)}${rankOf(st)[1]}</span></div>
  <div class="stats"><div><b>${S.points}</b><span>Puan</span></div><div><b>${st}</b><span>Seri</span></div><div><b>${S.best}</b><span>En uzun</span></div><div><b>${nb}</b><span>Rozet</span></div></div>${seg}${body}`;
 }
-const NAV=[['home','Ana Sayfa','home'],['tasks','Görevler','tasks'],['feed','Akış','image'],['lig','Lig','trophy'],['me','Profil','user']];
-const TITLES={home:'Merhaba!',tasks:'Görevler',feed:'Yeşil Akış',lig:'Liderlik',me:'Profil'};
+const NAV=[['home','Ana Sayfa','home'],['tasks','Görevler','tasks'],['harita','Harita','map'],['feed','Akış','image'],['lig','Lig','trophy'],['me','Profil','user']];
+const TITLES={home:'Merhaba!',tasks:'Görevler',harita:'Yeşil Harita',feed:'Yeşil Akış',lig:'Liderlik',me:'Profil'};
 function renderNav(){
  const b=NAV.map(([k,l,i])=>`<button data-act="tab" data-v="${k}">${ic(i,26)}<span>${l}</span></button>`).join('');
  $('#sideNav').innerHTML=b;$('#tabNav').innerHTML=b;
@@ -917,13 +1033,253 @@ function render(){
  $('#ttl').textContent=tab==='home'&&USER?`Merhaba, ${USER}!`:TITLES[tab];
  document.querySelectorAll('#sideNav button,#tabNav button').forEach(b=>b.setAttribute('aria-current',b.dataset.v===tab?'page':'false'));
  $('#sideFoot').innerHTML=USER?`${avHTML(USER,true)}<span>${esc(USER)}</span>`:`${ic('leaf',22)}<span>Bu cihazda kayıtlı</span>`;
- const v=$('#view');v.innerHTML={home:renderHome,tasks:renderTasks,feed:renderFeed,lig:renderLig,me:renderMe}[tab]();v.dataset.tab=tab;
+ if(tab!=='harita'&&H.harita){H.harita.remove();H.harita=null}
+ const v=$('#view');v.innerHTML={home:renderHome,tasks:renderTasks,harita:renderHarita,feed:renderFeed,lig:renderLig,me:renderMe}[tab]();v.dataset.tab=tab;
  scrollTo(0,keep);
+ if(tab==='harita'&&SUNUCU)haritaKur();
+}
+
+/* ---------- harita ---------- */
+const H={veri:null,son:0,harita:null,katman:null,taslakKatman:null,benKatman:null,merkez:[39.1,35.2],zoom:6,filtre:'hepsi',mod:null,taslak:null,popupAcik:false,hata:null,konum:null};
+const AGACLAR=['Çam','Meşe','Çınar','Ihlamur','Zeytin','Akçaağaç','Dişbudak','Erguvan','Meyve ağacı','Diğer'];
+let leafletSozu=null;
+function leafletYukle(){
+ if(window.L)return Promise.resolve();
+ // Stil dosyası da yüklenmeden harita kurulursa döşemeler kayık görünür; ikisi birlikte beklenir.
+ if(!leafletSozu)leafletSozu=Promise.all([
+  new Promise((ok,no)=>{const l=document.createElement('link');l.rel='stylesheet';l.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css';l.onload=()=>ok();l.onerror=()=>no(new Error('yüklenemedi'));document.head.appendChild(l)}),
+  new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';s.onload=()=>ok();s.onerror=()=>no(new Error('yüklenemedi'));document.head.appendChild(s)}),
+ ]).catch(e=>{leafletSozu=null;throw e});
+ return leafletSozu;
+}
+async function haritaVerisi(zorla){
+ if(!SUNUCU)return;
+ if(!zorla&&H.veri&&Date.now()-H.son<15000)return;
+ try{const r=await fetch('api/harita');if(!r.ok)throw 0;H.veri=await r.json();H.hata=null}catch(e){H.hata='Harita verisi alınamadı, biraz sonra tekrar denenecek.'}
+ H.son=Date.now();
+}
+const kucukAd=a=>String(a||'').toLocaleLowerCase('tr-TR');
+const gunOnce=t=>{const g=Math.floor((Date.now()-t)/DAY);return g<=0?'bugün':g===1?'dün':`${g} gün önce`};
+const tarihYaz=t=>new Date(t).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+const susuzMu=f=>Date.now()-(f.sonSulama||f.t)>3*DAY;
+function alanM2(n){const r=Math.PI/180,R=6378137;let t=0;for(let i=0;i<n.length;i++){const [a1,o1]=n[i],[a2,o2]=n[(i+1)%n.length];t+=(o2-o1)*r*(2+Math.sin(a1*r)+Math.sin(a2*r))}return Math.abs(t*R*R/2)}
+const ekipYazi=k=>[k.ad,...(k.ekip||[]).map(e=>e.ad)].map(esc).join(', ');
+const koyuTema=()=>document.documentElement.dataset.theme==='dark'||(document.documentElement.dataset.theme!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+function fidanIkonu(sinif){return L.divIcon({className:'',html:`<div class="fd-ikon ${sinif}">${ic('sapling',20)}</div>`,iconSize:[38,38],iconAnchor:[19,38],popupAnchor:[0,-36]})}
+function fidanPopup(f){
+ const g=Math.floor((Date.now()-f.t)/DAY),benim=USER&&f.sahip===kucukAd(USER);
+ return `<div class="pp-baslik">${esc(f.tur||'Fidan')}</div>
+ <div class="pp-satir">${ic('user',16)}<span>${ekipYazi(f)}</span></div>
+ <div class="pp-satir">${ic('sapling',16)}<span>${g<=0?'Bugün dikildi':`${g} gündür toprakta`} · ${tarihYaz(f.t)}</span></div>
+ <div class="pp-satir">${ic('drop',16)}<span>${f.sonSulama?`Son sulama ${gunOnce(f.sonSulama)} (${esc(f.sonSulayan)}) · toplam ${f.sulama} kez`:'Henüz sulanmadı'}</span></div>
+ ${susuzMu(f)?`<div class="pp-satir" style="color:#C77700">${ic('clock',16)}<span>Bu fidan suya ihtiyaç duyuyor</span></div>`:''}
+ <div class="pp-dugmeler"><button class="btn" data-act="sula" data-v="${f.id}">${ic('drop',16)}Suladım (+10)</button>${benim?`<button class="btn sec" data-act="hsil" data-v="fidan:${f.id}">${ic('trash',16)}<span>Sil</span></button>`:''}</div>`;
+}
+function alanPopup(a){
+ const benim=USER&&a.sahip===kucukAd(USER);
+ return `<div class="pp-baslik">${esc(a.isim||'Temizlenen alan')}</div>
+ <div class="pp-satir">${ic('area',16)}<span>${a.m2.toLocaleString('tr-TR')} m² çöpten temizlendi</span></div>
+ <div class="pp-satir">${ic('user',16)}<span>${ekipYazi(a)}</span></div>
+ <div class="pp-satir">${ic('clock',16)}<span>${gunOnce(a.t)} · ${tarihYaz(a.t)}</span></div>
+ ${benim?`<div class="pp-dugmeler"><button class="btn sec" data-act="hsil" data-v="alan:${a.id}">${ic('trash',16)}<span>Sil</span></button></div>`:''}`;
+}
+function ozetHTML(){
+ const v=H.veri||{fidanlar:[],alanlar:[]};
+ return `<div><b>${v.fidanlar.length.toLocaleString('tr-TR')}</b><span>Dikilen fidan</span></div><div><b>${v.alanlar.reduce((s,x)=>s+x.m2,0).toLocaleString('tr-TR')}</b><span>Temizlenen m²</span></div><div><b>${v.fidanlar.filter(susuzMu).length}</b><span>Suya ihtiyacı olan</span></div>`;
+}
+function ozetYenile(){const o=$('#haritaOzet');if(o)o.innerHTML=ozetHTML();const h=$('#haritaHata');if(h)h.textContent=H.hata||''}
+function renderHarita(){
+ if(!SUNUCU)return `<section class="panel"><h2>Yeşil Harita</h2><p class="muted" style="font-weight:600">Harita, dikilen fidanları ve temizlenen alanları herkesle paylaştığı için hesapla giriş yapınca açılır.</p></section>`;
+ const not=H.mod==='fidan-yer'?`<div class="harita-not">${ic('pin',20)}<span>Fidanı diktiğin yere dokun ya da "Konumum"a bas.</span></div>`
+  :H.mod==='alan-ciz'?`<div class="harita-not">${ic('area',20)}<span>Temizlediğin alanın köşelerine sırayla dokun.</span></div>`:'';
+ return `<div class="harita-ust">${[['hepsi','Hepsi'],['fidan','Fidanlar'],['alan','Temizlenen alanlar']].map(([k,l])=>`<button class="chip ${H.filtre===k?'ok':''}" data-act="hfiltre" data-v="${k}">${l}</button>`).join('')}<button class="chip" data-act="konum" style="margin-left:auto">${ic('locate',16)}Konumum</button></div>
+ <div class="harita" id="haritaKutu">${not}<div class="harita-yukleniyor">Harita yükleniyor…</div></div>
+ <div id="haritaPanel">${haritaPanel()}</div>
+ ${H.mod?'':`<div class="tiles"><button class="tile" data-act="hbasla" data-v="fidan"><span class="ti c-plant">${ic('sapling',26)}</span><b>Fidan diktim</b><span class="chip">Haritaya ekle</span></button><button class="tile" data-act="hbasla" data-v="alan"><span class="ti c-recycle">${ic('area',26)}</span><b>Alan temizledim</b><span class="chip">Haritada çiz</span></button></div>`}
+ <div class="harita-ozet" id="haritaOzet">${ozetHTML()}</div>
+ <div class="lejant"><span><i style="background:var(--leaf)"></i>Sulanmış fidan</span><span><i style="background:#F29A2E"></i>3 gündür sulanmamış</span><span><i style="background:color-mix(in srgb,var(--leaf) 35%,transparent);outline:2px dashed var(--leaf-d)"></i>Temizlenen alan</span></div>
+ <p class="small" id="haritaHata" style="color:var(--coral);font-weight:700">${H.hata||''}</p>
+ <p class="small muted" style="font-weight:600">Fidanlar ve alanlar kullanıcı adınla birlikte herkese görünür. Evinin ya da okulunun tam konumunu işaretleme. Kendi eklediklerini işaretine dokunup silebilirsin. Fidanı sulamak için yanında olman gerekir.</p>`;
+}
+function haritaPanel(){
+ const t=H.taslak;if(!H.mod||!t)return '';
+ const ark=ARK&&ARK.arkadaslar.length
+  ?`<div class="field"><label>Birlikte yaptığın arkadaşlar</label><div class="ekip-sec">${ARK.arkadaslar.map(a=>`<label><input type="checkbox" data-ekip="${esc(a.ad)}" ${t.ekip.includes(a.ad)?'checked':''}>${esc(a.ad)}</label>`).join('')}</div><p class="small muted">Etiketlediğin arkadaşlar da haftalık sıralamada puan alır.</p></div>`
+  :`<p class="small muted" style="font-weight:600">Arkadaş eklersen birlikte yaptıklarınızı etiketleyebilirsin (Profil → Arkadaşlar).</p>`;
+ if(H.mod==='fidan-yer')return `<section class="panel"><h3 style="font-size:22px">Fidanını haritaya ekle</h3>
+  <p class="small muted" style="font-weight:700">${t.konum?'Konum seçildi. Değiştirmek için haritada başka bir yere dokun.':'Henüz konum seçilmedi.'}</p>
+  <div class="field"><label>Fidan türü</label><div class="tur-sec">${AGACLAR.map(x=>`<button data-act="htur" data-v="${x}" aria-pressed="${t.agac===x}">${x}</button>`).join('')}</div></div>
+  ${ark}
+  <div class="tiles"><button class="btn sec" data-act="hiptal">Vazgeç</button><button class="btn" data-act="hkaydet" ${t.konum?'':'disabled'}>${ic('check',18)}Haritaya ekle</button></div></section>`;
+ const m2=t.nokta.length>=3?Math.round(alanM2(t.nokta)):0;
+ return `<section class="panel"><h3 style="font-size:22px">Temizlediğin alanı çiz</h3>
+  <p><b style="font-family:var(--display);font-size:28px">${m2.toLocaleString('tr-TR')} m²</b> <span class="small muted" style="font-weight:700">· ${t.nokta.length} köşe</span></p>
+  ${m2>10000?'<p class="small" style="color:var(--coral);font-weight:800">Bir alan en fazla 10.000 m² olabilir.</p>':''}
+  <div class="field"><label for="halanAd">Alanın adı (isteğe bağlı)</label><input type="text" id="halanAd" maxlength="40" placeholder="Örn: Okul arkasındaki park" value="${esc(t.isim||'')}"></div>
+  ${ark}
+  <div class="tiles"><button class="btn sec" data-act="hgeri" ${t.nokta.length?'':'disabled'}>${ic('undo',18)}Son köşeyi sil</button><button class="btn" data-act="hkaydet" ${t.nokta.length>=3&&m2>=10&&m2<=10000?'':'disabled'}>${ic('check',18)}Kaydet</button></div>
+  <button class="btn sec block" data-act="hiptal">Vazgeç</button></section>`;
+}
+function panelYenile(){const p=$('#haritaPanel');if(p)p.innerHTML=haritaPanel()}
+async function haritaKur(){
+ const kutu=$('#haritaKutu');if(!kutu)return;
+ // Veri haritadan bağımsız çekilir; harita yüklenemese de sayılar güncellenir.
+ const veriSozu=haritaVerisi().then(ozetYenile);
+ try{await leafletYukle()}catch(e){const y=kutu.querySelector('.harita-yukleniyor');if(y)y.textContent='Harita yüklenemedi. İnternet bağlantını kontrol et.';return}
+ if(!document.body.contains(kutu))return;
+ kutu.querySelector('.harita-yukleniyor')?.remove();
+ if(H.harita){H.harita.remove();H.harita=null}
+ const m=L.map(kutu,{zoomControl:true}).setView(H.merkez,H.zoom);
+ m.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
+ L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/${koyuTema()?'dark_all':'voyager'}/{z}/{x}/{y}{r}.png`,{maxZoom:20,subdomains:'abcd',
+  attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> katkıcıları © <a href="https://carto.com/attributions">CARTO</a>'}).addTo(m);
+ m.on('moveend',()=>{const c=m.getCenter();H.merkez=[c.lat,c.lng];H.zoom=m.getZoom()});
+ m.on('click',e=>haritaTik(e.latlng));
+ m.on('popupopen',e=>{H.popupAcik=true;const el=e.popup.getElement();if(el&&!el.dataset.bagli){el.dataset.bagli=1;el.addEventListener('click',tiklama)}});
+ m.on('popupclose',()=>{H.popupAcik=false});
+ H.harita=m;H.katman=L.layerGroup().addTo(m);H.taslakKatman=L.layerGroup().addTo(m);H.benKatman=L.layerGroup().addTo(m);
+ katmanCiz();taslakCiz();benCiz();
+ await veriSozu;
+ if(H.harita===m)katmanCiz();
+}
+function katmanCiz(){
+ if(!H.katman||!H.veri)return;H.katman.clearLayers();const ben=kucukAd(USER);
+ // Ekleme ya da çizim sırasında mevcut kayıtlar tıklamayı yakalamasın.
+ const etkin=!H.mod;
+ if(H.filtre!=='fidan')for(const a of H.veri.alanlar)L.polygon(a.nokta,{color:'#23893F',weight:2,dashArray:'6 5',fillColor:'#34B35A',fillOpacity:.3,interactive:etkin}).bindPopup(()=>alanPopup(a)).addTo(H.katman);
+ if(H.filtre!=='alan')for(const f of H.veri.fidanlar)L.marker([f.lat,f.lng],{icon:fidanIkonu((susuzMu(f)?'susuz ':'')+(f.sahip===ben?'benim':'')),title:f.tur,interactive:etkin,keyboard:etkin}).bindPopup(()=>fidanPopup(f)).addTo(H.katman);
+}
+function taslakCiz(){
+ if(!H.taslakKatman)return;H.taslakKatman.clearLayers();const t=H.taslak;if(!t)return;
+ if(H.mod==='fidan-yer'&&t.konum)L.marker(t.konum,{icon:fidanIkonu('taslak'),interactive:false}).addTo(H.taslakKatman);
+ if(H.mod==='alan-ciz'&&t.nokta.length){
+  if(t.nokta.length>=2)L.polygon(t.nokta,{color:'#2F9BE6',weight:3,fillColor:'#2F9BE6',fillOpacity:.2,interactive:false}).addTo(H.taslakKatman);
+  t.nokta.forEach(p=>L.circleMarker(p,{radius:6,color:'#1C78B8',fillColor:'#fff',fillOpacity:1,weight:3,interactive:false}).addTo(H.taslakKatman));
+ }
+}
+function benCiz(){if(!H.benKatman)return;H.benKatman.clearLayers();if(H.konum)L.circleMarker(H.konum,{radius:8,color:'#fff',weight:3,fillColor:'#2F9BE6',fillOpacity:1,interactive:!H.mod}).bindTooltip('Buradasın').addTo(H.benKatman)}
+function haritaTik(ll){
+ if(H.mod==='fidan-yer'){H.taslak.konum=[ll.lat,ll.lng];taslakCiz();panelYenile()}
+ else if(H.mod==='alan-ciz'){if(H.taslak.nokta.length>=40){toast('En fazla 40 köşe ekleyebilirsin','area');return}H.taslak.nokta.push([ll.lat,ll.lng]);taslakCiz();panelYenile()}
+}
+function konumAl(){
+ return new Promise((ok,no)=>{
+  if(!navigator.geolocation)return no(new Error('Cihazın konum özelliğini desteklemiyor'));
+  navigator.geolocation.getCurrentPosition(p=>ok([p.coords.latitude,p.coords.longitude]),
+   e=>no(new Error(e.code===1?'Konum izni verilmedi. Tarayıcı ayarlarından bu siteye konum izni ver.':'Konumun alınamadı, biraz sonra tekrar dene.')),
+   {enableHighAccuracy:true,timeout:15000,maximumAge:20000});
+ });
+}
+async function konumaGit(){
+ try{
+  const k=await konumAl();H.konum=k;H.merkez=k;H.zoom=Math.max(H.zoom,17);
+  if(H.harita)H.harita.setView(k,H.zoom);benCiz();
+  if(H.mod==='fidan-yer'){H.taslak.konum=k;taslakCiz();panelYenile()}
+ }catch(e){toast(e.message,'locate')}
+}
+function haritaBasla(tur){
+ if(!SUNUCU){toast('Haritaya eklemek için giriş yapmalısın','map');return}
+ if(ARK===null)arkadaslariGetir(false);
+ const fidan=tur==='fidan';
+ sheet(`${sheetHead(fidan?'Fidan diktim':'Alan temizledim','1. adım: fotoğrafla doğrula')}
+ <p>${fidan?'Diktiğin fidanın fotoğrafını yükle.':'Topladığın çöplerin ya da temizlediğin alanın fotoğrafını yükle.'} Fotoğraf sadece kontrol için kullanılır, hiçbir yerde saklanmaz.</p>
+ <div class="aiq"><b>Yapay zekânın soracağı soru:</b> “${fidan?'Fotoğrafta yeni dikilmiş bir fidan var mı?':'Fotoğrafta toplanmış çöp ya da temizlenmiş bir alan var mı?'}”</div>
+ <label class="upload">${ic('camera',34)}Fotoğraf çek veya yükle<span class="small muted">Onay gelince haritaya geçeceksin</span><input type="file" id="hImg" accept="image/*" capture="environment" data-tur="${tur}"></label>
+ <div id="anl" style="display:flex;flex-direction:column;gap:12px"></div>`);
+}
+async function haritaDogrula(tur,src){
+ const box=$('#anl');if(!box)return;const gorev=tur==='fidan'?'fidan':'temizlik';
+ box.innerHTML=`<img class="preview" src="${src}" alt="Yüklenen fotoğraf"><div class="steps"><div>${ic('check',18,'style="color:var(--leaf)"')}Fotoğraf kontrol ediliyor…</div></div>`;
+ const r=await aiVerify(gorev,src);if(!$('#anl'))return;
+ if(r.err){box.insertAdjacentHTML('beforeend',`<div class="verdict no">${ic('x',24)}<div>Yapay zekâya ulaşılamadı (${esc(r.err)}). Biraz sonra tekrar dene.</div></div>`);return}
+ if(!r.onay||!r.jeton){box.insertAdjacentHTML('beforeend',`<div class="verdict no">${ic('x',24)}<div><b>Bu fotoğraf onaylanmadı.</b><br><span class="small">${esc(r.gerekce||'')}</span></div></div>`);return}
+ box.insertAdjacentHTML('beforeend',`<div class="verdict ok">${ic('check',24)}<div><b>Onaylandı!</b> <span class="small">${esc(r.gerekce||'')}</span></div></div>`);
+ await wait(900);closeSheet();
+ H.mod=tur==='fidan'?'fidan-yer':'alan-ciz';H.taslak={gorev,jeton:r.jeton,konum:null,nokta:[],ekip:[],agac:'Çam',isim:''};
+ tab='harita';render();scrollTo(0,0);
+ if(tur==='fidan')konumaGit();
+}
+async function haritaKaydet(btn){
+ const t=H.taslak;if(!t)return;btn.disabled=true;
+ const r=H.mod==='fidan-yer'
+  ?await postJSON('api/harita',{islem:'fidan',lat:t.konum[0],lng:t.konum[1],tur:t.agac,ekip:t.ekip,jeton:t.jeton})
+  :await postJSON('api/harita',{islem:'alan',nokta:t.nokta,ad:t.isim,ekip:t.ekip,jeton:t.jeton});
+ if(r.err){toast(r.err,'x');btn.disabled=false;if(r.status===403){H.mod=null;H.taslak=null;render()}return}
+ if(!H.veri)H.veri={fidanlar:[],alanlar:[]};
+ if(r.fidan)H.veri.fidanlar.push(r.fidan);if(r.alan)H.veri.alanlar.push(r.alan);
+ const g=TASKS.find(x=>x.id===t.gorev);
+ if(!isDone(g)){doneList('w'+weekIdx()).push(g.id);S.counts[g.id]=(S.counts[g.id]||0)+1;S.total++;addPoints(g.p,g.t)}
+ else if(r.fidan)addPoints(50,'Yeni fidan');
+ else addPoints(Math.max(10,Math.min(200,Math.round(r.alan.m2/10))),'Temizlenen alan');
+ if(t.ekip.length)addPoints(20,'Ekip bonusu');
+ konfeti();
+ if(r.fidan){H.merkez=[r.fidan.lat,r.fidan.lng];H.zoom=Math.max(H.zoom,16)}
+ H.mod=null;H.taslak=null;recordActivity();commit();
+ toast(r.fidan?'Fidanın haritada! Herkes görüp sulayabilir.':`${r.alan.m2.toLocaleString('tr-TR')} m² haritaya eklendi`,'map');
+}
+async function sula(id,btn){
+ btn.disabled=true;let k;
+ try{k=await konumAl()}catch(e){toast(e.message,'locate');btn.disabled=false;return}
+ H.konum=k;benCiz();
+ const r=await postJSON('api/harita',{islem:'sula',id,lat:k[0],lng:k[1]});
+ if(r.err){toast(r.err,'drop');btn.disabled=false;return}
+ const i=H.veri.fidanlar.findIndex(f=>f.id===id);if(i>=0)H.veri.fidanlar[i]=r.fidan;
+ H.harita?.closePopup();katmanCiz();ozetYenile();konfeti(50);
+ addPoints(10,'Fidan suladın');recordActivity();checkBadges();save();
+ $('#pts').textContent=S.points;$('#stk').textContent=curStreak();
+}
+async function haritaSil(v,btn){
+ if(!btn.dataset.sure){btn.dataset.sure=1;btn.lastChild.textContent='Emin misin?';return}
+ const [tip,id]=v.split(':');btn.disabled=true;
+ const r=await postJSON('api/harita',{islem:'sil',tip,id});
+ if(r.err){toast(r.err,'x');btn.disabled=false;return}
+ const l=tip==='alan'?'alanlar':'fidanlar';H.veri[l]=H.veri[l].filter(x=>x.id!==id);
+ H.harita?.closePopup();katmanCiz();ozetYenile();toast('Haritadan silindi','trash');
+}
+setInterval(async()=>{
+ if(tab!=='harita'||document.hidden||H.mod||H.popupAcik||!H.harita)return;
+ await haritaVerisi(true);katmanCiz();ozetYenile();
+},30000);
+
+/* ---------- arkadaşlar, profil fotoğrafı, şampiyonlar ---------- */
+let ARK=null,AVV=Date.now(),SAMP=null,sampZaman=0,sampYukleniyor=false;
+async function arkadaslariGetir(yenidenCiz){
+ if(!SUNUCU)return;
+ try{const r=await fetch('api/sosyal?islem=arkadaslar');ARK=r.ok?await r.json():{arkadaslar:[],istekler:[],giden:[]}}catch(e){ARK={arkadaslar:[],istekler:[],giden:[]}}
+ if(yenidenCiz&&tab==='me'&&ptab==='ark')render();
+ if(H.mod)panelYenile();
+}
+async function arkIslem(islem,ad){
+ const r=await postJSON('api/sosyal',{islem,ad});
+ if(r.err){toast(r.err,'users');return}
+ ARK={arkadaslar:r.arkadaslar,istekler:r.istekler,giden:r.giden};
+ toast(islem==='istek'?(r.durum==='arkadas'?`${r.ad} ile artık arkadaşsınız!`:`${r.ad} kişisine istek gönderildi`):islem==='kabul'?`${ad} ile artık arkadaşsınız!`:islem==='cikar'?`${ad} arkadaşlarından çıkarıldı`:'İstek kaldırıldı','users');
+ render();
+}
+async function avatarYukle(file){
+ try{
+  const url=URL.createObjectURL(file);const i=await loadImg(url);URL.revokeObjectURL(url);
+  const s=Math.min(i.naturalWidth,i.naturalHeight),c=document.createElement('canvas');c.width=c.height=160;
+  c.getContext('2d').drawImage(i,(i.naturalWidth-s)/2,(i.naturalHeight-s)/2,s,s,0,0,160,160);
+  const r=await postJSON('api/sosyal',{islem:'avatar',resim:c.toDataURL('image/jpeg',.82)});
+  if(r.err){toast(r.err,'camera');return}
+  AVV=Date.now();toast('Profil fotoğrafın güncellendi','camera');render();
+ }catch(e){toast('Fotoğraf açılamadı','camera')}
+}
+async function avatarSil(){const r=await postJSON('api/sosyal',{islem:'avatarSil'});if(r.err){toast(r.err,'camera');return}AVV=Date.now();toast('Profil fotoğrafın kaldırıldı','camera');render()}
+async function sampiyonlariGetir(){
+ if(!SUNUCU||sampYukleniyor||Date.now()-sampZaman<30000)return;
+ sampYukleniyor=true;
+ try{const r=await fetch('api/sosyal?islem=sampiyonlar');if(r.ok)SAMP=await r.json()}catch(e){}
+ sampYukleniyor=false;sampZaman=Date.now();
+ if(tab==='lig')render();
 }
 
 /* ---------- akışlar ---------- */
 function openTask(id){
- const t=TASKS.find(x=>x.id===id);if(!t)return;const done=isDone(t);
+ const t=TASKS.find(x=>x.id===id);if(!t)return;
+ if(t.harita){tab='harita';render();scrollTo(0,0);haritaBasla(t.harita);return}
+ const done=isDone(t);
  sheet(`${sheetHead(t.t,(t.w?'Haftalık':'Günlük')+` görev · +${t.p} puan`)}<p>${t.d}</p>
  <div class="aiq"><b>Yapay zekânın soracağı soru:</b> “${CHECKS[t.chk].q}”</div>
  ${done?`<div class="verdict ok">${ic('check',24)}Bu görevi ${t.w?'bu hafta':'bugün'} tamamladın.</div>`:`
@@ -996,8 +1352,22 @@ async function ask(q){
 }
 
 /* ---------- olaylar ---------- */
-document.addEventListener('click',e=>{
+// Harita baloncukları tıklamaları kendi içinde durdurduğu için aynı fonksiyon onlara da bağlanır.
+function tiklama(e){
+ if(e._islendi)return;e._islendi=true;
  const el=e.target.closest('[data-act]');if(!el)return;const a=el.dataset.act,v=el.dataset.v;
+ if(a==='hbasla'){haritaBasla(v);return}
+ if(a==='sampgit'){tab='lig';lbtab='samp';render();scrollTo(0,0);return}
+ if(a==='hfiltre'){H.filtre=v;document.querySelectorAll('[data-act="hfiltre"]').forEach(b=>b.classList.toggle('ok',b.dataset.v===v));katmanCiz();return}
+ if(a==='konum'){konumaGit();return}
+ if(a==='htur'){H.taslak.agac=v;panelYenile();return}
+ if(a==='hgeri'){H.taslak.nokta.pop();taslakCiz();panelYenile();return}
+ if(a==='hiptal'){H.mod=null;H.taslak=null;render();return}
+ if(a==='hkaydet'){haritaKaydet(el);return}
+ if(a==='sula'){sula(v,el);return}
+ if(a==='hsil'){haritaSil(v,el);return}
+ if(a==='arkKabul'||a==='arkReddet'||a==='arkCikar'){arkIslem({arkKabul:'kabul',arkReddet:'reddet',arkCikar:'cikar'}[a],v);return}
+ if(a==='avsil'){avatarSil();return}
  if(a==='closebg'){if(e.target===el)closeSheet();return}
  if(a==='close'){closeSheet();return}
  if(a==='partyok'){siradakiParti();return}
@@ -1030,14 +1400,19 @@ document.addEventListener('click',e=>{
  if(a==='rerate'){S.rating.sent=false;save();render();return}
  if(a==='chat'){openChat();return}
  if(a==='ask'){ask(v);return}
-});
+}
+document.addEventListener('click',tiklama);
 document.addEventListener('submit',e=>{
  if(e.target.id==='chatform'){e.preventDefault();ask($('#chatq').value)}
+ if(e.target.id==='arkForm'){e.preventDefault();const ad=$('#arkAd').value.trim();if(ad)arkIslem('istek',ad)}
  if(e.target.id==='authForm'){e.preventDefault();authGonder()}
 });
-document.addEventListener('input',e=>{if(e.target.id==='draft')draft=e.target.value});
+document.addEventListener('input',e=>{if(e.target.id==='draft')draft=e.target.value;if(e.target.id==='halanAd'&&H.taslak)H.taslak.isim=e.target.value});
 document.addEventListener('change',async e=>{
  const t=e.target;
+ if(t.dataset.ekip!==undefined&&H.taslak){const ad=t.dataset.ekip;H.taslak.ekip=t.checked?[...new Set([...H.taslak.ekip,ad])]:H.taslak.ekip.filter(x=>x!==ad);return}
+ if(t.id==='hImg'&&t.files[0]){try{haritaDogrula(t.dataset.tur,await downscale(t.files[0],900))}catch(_){$('#anl').innerHTML='<div class="verdict no">Bu dosya açılamadı. JPG veya PNG bir fotoğraf dene.</div>'}return}
+ if(t.id==='avatarImg'&&t.files[0]){avatarYukle(t.files[0]);return}
  if(t.id==='taskImg'&&t.files[0]){const task=TASKS.find(x=>x.id===t.dataset.task);try{verify(task,await downscale(t.files[0],900))}catch(_){$('#anl').innerHTML='<div class="verdict no">Bu dosya açılamadı. JPG veya PNG bir fotoğraf dene.</div>'}}
  if(t.id==='postImg'&&t.files[0]){try{draftImg=await downscale(t.files[0],640);render()}catch(_){toast('Fotoğraf açılamadı','image')}}
  if(t.id==='ntime'){S.notify=t.value||'19:00';save();toast(`Hatırlatma her gün ${S.notify}`,'bell')}

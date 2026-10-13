@@ -67,17 +67,61 @@ export const gecerliJeton = t => typeof t === 'string' && /^[a-f0-9]{64}$/.test(
 // yeniden açılırsa eski hesabın diğer cihazlarda kalan oturumları yeni hesaba erişemez.
 export const oturumDegeri = (anahtar, olusturma) => `${anahtar}|${olusturma}`;
 
-// Oturum çerezindeki jetona bağlı kullanıcı anahtarını döndürür; geçersizse null.
-export async function oturumKullanici(req) {
+export function jsonOku(ham) {
+  try { return ham ? JSON.parse(ham) : null; } catch { return null; }
+}
+
+// Oturum çerezindeki kullanıcıyı { anahtar, ad } olarak döndürür; geçersizse null.
+export async function oturumBilgi(req) {
   const jeton = cerezOku(req, 'oturum');
   if (!gecerliJeton(jeton)) return null;
   const deger = await redis('GET', 'oturum:' + jeton);
   if (!deger) return null;
   const [anahtar, olusturma] = String(deger).split('|');
-  const ham = await redis('GET', 'kullanici:' + anahtar);
-  let k = null;
-  try { k = ham ? JSON.parse(ham) : null; } catch { k = null; }
-  return k && String(k.olusturma) === olusturma ? anahtar : null;
+  const k = jsonOku(await redis('GET', 'kullanici:' + anahtar));
+  return k && String(k.olusturma) === olusturma ? { anahtar, ad: k.ad } : null;
+}
+
+export async function oturumKullanici(req) {
+  const b = await oturumBilgi(req);
+  return b ? b.anahtar : null;
+}
+
+export const kullaniciAnahtari = ad => String(ad || '').trim().toLocaleLowerCase('tr-TR');
+
+// Türkiye saatine göre gün ve hafta numarası (haftalar pazartesi başlar).
+export const gunNo = (t = Date.now()) => Math.floor((t + 3 * 3600_000) / 86400_000);
+export const haftaNo = (t = Date.now()) => Math.floor((gunNo(t) + 3) / 7);
+
+// Redis'in düz dizi ya da nesne olarak dönen [alan, değer, alan, değer] cevaplarını çiftlere çevirir.
+export function ciftler(cevap) {
+  if (!cevap) return [];
+  if (!Array.isArray(cevap)) return Object.entries(cevap);
+  if (cevap.length && Array.isArray(cevap[0])) return cevap;
+  const r = [];
+  for (let i = 0; i < cevap.length; i += 2) r.push([cevap[i], cevap[i + 1]]);
+  return r;
+}
+
+export function govdeAl(req) {
+  let g = req.body;
+  if (typeof g === 'string') { try { g = JSON.parse(g); } catch { g = null; } }
+  return g && typeof g === 'object' ? g : null;
+}
+
+export function cevap(res, kod, veri) {
+  res.setHeader('Cache-Control', 'no-store');
+  res.status(kod).json(veri);
+}
+
+// Verilen anahtarların görünen adlarını tek seferde getirir (silinmiş kullanıcılar atlanır).
+export async function adlariGetir(anahtarlar) {
+  const liste = [...new Set(anahtarlar)].filter(Boolean);
+  if (!liste.length) return {};
+  const hamlar = await redis('MGET', ...liste.map(a => 'kullanici:' + a));
+  const sonuc = {};
+  liste.forEach((a, i) => { const k = jsonOku(hamlar[i]); if (k) sonuc[a] = k.ad; });
+  return sonuc;
 }
 
 export async function sifreOzeti(sifre, tuz) {

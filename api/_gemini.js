@@ -26,9 +26,8 @@ export async function islem(req, res, ad, limit, fn) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return cevap(res, 503, { hata: 'Gemini anahtarı henüz girilmemiş' });
   // Hesap sistemi kuruluysa Gemini yalnızca giriş yapmış kullanıcılara açılır.
-  if (dbVar() && !(await oturumKullanici(req).catch(() => null))) {
-    return cevap(res, 401, { hata: 'Önce giriş yap' });
-  }
+  const kullanici = dbVar() ? await oturumKullanici(req).catch(() => null) : null;
+  if (dbVar() && !kullanici) return cevap(res, 401, { hata: 'Önce giriş yap' });
   if (!hizSiniri(req, ad, limit)) return cevap(res, 429, { hata: 'Çok fazla istek gönderdin, biraz sonra tekrar dene' });
 
   let govde = req.body;
@@ -41,7 +40,7 @@ export async function islem(req, res, ad, limit, fn) {
     .filter((m, i, a) => m && a.indexOf(m) === i);
   const ayar = { key, modeller };
   try {
-    await fn(govde, ayar);
+    await fn(govde, ayar, kullanici);
   } catch (e) {
     cevap(res, 502, { hata: e.message || 'Gemini\'ye ulaşılamadı' });
   }
