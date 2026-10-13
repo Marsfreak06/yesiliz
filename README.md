@@ -50,6 +50,10 @@ Veritabanı bağlı değilse site hesapsız çalışır, ilerleme yalnızca o ci
 
 `fidan × 100 + temizlenen m² ÷ 10 + sulama × 25 + haftalık puan ÷ 10`, haftalar pazartesi (Türkiye saati) başlar.
 
+## Bildirimler (Web Push)
+
+Vercel ortam değişkenleri: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (web-push ile üretilen anahtar çifti) ve `CRON_SECRET`. Günlük hatırlatma `vercel.json` içindeki zamanlanmış görevle her akşam (16:00 UTC, 19:00 TR) `/api/hatirlatma` çağrılarak gönderilir. Kurallar: bildirim yalnızca kullanıcı Ayarlar'dan açınca istenir; günlük hatırlatma en fazla bir kez ve yalnızca o gün görev yapmamış, son 14 gün içinde aktif olmuş kişilere; anlık bildirimler (dürtme, arkadaşlık, hediye) 22:00-08:00 arası gönderilmez ve günde en fazla 3 tanedir. iPhone'da site ana ekrana eklenmelidir.
+
 ## Yönetici paneli
 
 Vercel'de `ADMIN_SIFRE` ortam değişkenini ekle (Production) ve yeniden yayınla. Giriş ekranının sağ altındaki ve Ayarlar'ın en altındaki "Yönetici" bağlantısından şifreyle girilir. Panelde: kullanıcı listesi ve hediye puan gönderme, mağaza fiyatlarını değiştirme, haritadaki fidan ve alanları silme, değerlendirme yorumlarını okuma. Yönetici oturumu 8 saat sürer; aynı IP'den 15 dakikada en fazla 5 giriş denemesi yapılabilir.

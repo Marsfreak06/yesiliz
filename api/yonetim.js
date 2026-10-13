@@ -10,6 +10,7 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { dbVar, redis, cerezOku, jsonOku, ciftler, govdeAl, cevap, haftaNo, kullaniciAnahtari, kodOzeti } from './_db.js';
 import { gonderiSil } from './akis.js';
+import { bildirimDene } from './_push.js';
 
 const OTURUM = 8 * 3600;           // yönetici oturumu 8 saat
 const HEDIYE_UST = 100_000;
@@ -124,6 +125,7 @@ export default async function handler(req, res) {
       const not = String(g.not || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 140);
       await redis('RPUSH', 'hediye:' + anahtar, JSON.stringify({ miktar, not, t: Date.now() }));
       await redis('EXPIRE', 'hediye:' + anahtar, 90 * 86400);
+      await bildirimDene(anahtar, { baslik: `Hediye geldi! +${miktar.toLocaleString('tr-TR')} puan`, metin: not || 'Yeşiliz ekibinden sana bir hediye. Uygulamayı açınca puanın eklenecek.', etiket: 'hediye' }, 'hediye');
       return cevap(res, 200, { tamam: true, ad: u.ad, miktar });
     }
 

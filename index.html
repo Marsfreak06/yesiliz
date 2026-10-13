@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Yeşiliz: her gün küçük bir çevre görevi yap, serini büyüt, puan ve rozet topla.">
 <meta name="theme-color" content="#34B35A">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/ikon-192.png">
+<link rel="apple-touch-icon" href="/ikon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Yeşiliz">
 <title>Yeşiliz</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -744,7 +749,7 @@ function oturumBasla(j){
  OKUL=j.okul||null;AKIS.liste=null;
  hazirla();yereleYaz();
  if(OKUL)uygulamaGoster();else okulAdimGoster();
- magazaFiyatlari();hediyeleriAl();
+ magazaFiyatlari();hediyeleriAl();PUSH.durum=null;pushYenile();
  arkadaslariGetir(false).then(()=>{if(ARK&&ARK.istekler.length)toast(`${ARK.istekler.length} yeni arkadaşlık isteğin var (Profil → Arkadaşlar)`,'users')});
 }
 function authGoster(){closeSheet();$('#shell').hidden=true;$('#auth').hidden=false;authModu(authMod);setTimeout(()=>$('#aAd').focus(),50)}
@@ -997,6 +1002,7 @@ function renderHome(){
   <div class="quote"><q>${esc(q.t)}</q><p class="by">${esc(q.a)}</p></div>
   <div class="votes"><button class="vote" data-act="vote" data-v="up" aria-pressed="${qv==='up'}">${ic('up',18)}Beğendim</button><button class="vote" data-act="vote" data-v="down" aria-pressed="${qv==='down'}">${ic('up',18,'style="transform:scaleY(-1)"')}Beğenmedim</button></div>
  </section>
+ ${bildirimOnerisi()}
  ${ortakSeriPaneli()}
  ${SUNUCU?`<section class="banner deg-serit">${degerlendirmeHTML(false)}<button class="btn sec" data-act="deggit">${S.rating&&S.rating.sent?'Değerlendirmen':'Değerlendir'}</button></section>`:''}`;
 }
@@ -1173,10 +1179,7 @@ function renderMe(){
    <p class="small muted" style="font-weight:600">Akışta paylaştığın fotoğraflar sadece bu cihazda durur. Paylaşımı "Sil" düğmesiyle istediğin zaman kaldırabilirsin.${SUNUCU?' Hesabında puanın, serin, ayarların ve arkadaş listen tutulur.':''}</p>
    ${SUNUCU?`<p class="small muted" style="font-weight:600">Herkese açık olanlar: kullanıcı adın, profil fotoğrafın, haftalık sıralamadaki puanların ve haritaya eklediğin fidanlar ile temizlik alanları (konumu, tarihi ve kimlerle yaptığınla birlikte). Haritadaki kayıtlarını işaretine dokunup silebilirsin. Hesabını silersen bunların hepsi silinir.</p>
    <button class="btn sec" data-act="avsil">${ic('camera',18)}Profil fotoğrafımı kaldır</button>`:''}</section>
-  <section class="panel"><h3 style="font-size:22px">Günlük hatırlatma</h3>
-   <div class="field"><label for="ntime">Bildirim saati</label><input type="time" id="ntime" value="${S.notify}"></div>
-   <label class="small" style="display:flex;gap:8px;align-items:center;font-weight:700"><input type="checkbox" id="non" ${S.notifyOn?'checked':''}> Serimi kaybetmemem için her gün hatırlat</label>
-   <button class="btn sec" data-act="push">${ic('bell',18)}Bildirimi önizle</button></section>
+  ${bildirimPaneli()}
   <section class="panel" id="degPanel"><h3 style="font-size:22px">Uygulamayı değerlendir</h3>
    ${degerlendirmeHTML(true)}
    ${r&&r.sent?`<p>Teşekkürler! Puanın: <b>${r.stars}/5</b></p>${r.text?`<p class="small muted">“${esc(r.text)}”</p>`:''}<button class="btn sec" data-act="rerate">Düzenle</button>`
@@ -1643,6 +1646,74 @@ function yilanCiz(d){
  for(const k of [-1,1]){const ex=cx+dx*3-dy*k*4.5,ey=cy+dy*3+dx*k*4.5;x.fillStyle='#fff';x.beginPath();x.arc(ex,ey,3.6,0,7);x.fill();x.fillStyle='#13261a';x.beginPath();x.arc(ex+dx*1.4,ey+dy*1.4,1.9,0,7);x.fill()}
 }
 
+/* ---------- telefon ve bilgisayar bildirimleri ---------- */
+// Durum: yok (destek yok) | ios (iPhone'da ana ekrana eklenmemiş) | reddedildi | kapali | acik
+const PUSH={durum:null,ayar:{hatirlatma:true,arkadas:true},yukleniyor:false};
+const iosMu=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const anaEkrandaMi=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+function b64Diziye(b){const p='='.repeat((4-b.length%4)%4),h=atob((b+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(h,c=>c.charCodeAt(0))}
+async function swKaydi(){if(!('serviceWorker' in navigator))return null;try{return await navigator.serviceWorker.register('/sw.js')}catch(e){return null}}
+async function pushDurumu(){
+ if(!SUNUCU)return 'yok';
+ if(iosMu()&&!anaEkrandaMi())return 'ios';
+ if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window))return 'yok';
+ if(Notification.permission==='denied')return 'reddedildi';
+ const k=await swKaydi();const a=k&&await k.pushManager.getSubscription();
+ return a&&Notification.permission==='granted'?'acik':'kapali';
+}
+async function pushYenile(){
+ if(PUSH.yukleniyor)return;PUSH.yukleniyor=true;
+ const d=await pushDurumu();
+ if(d==='acik'){try{const r=await fetch('api/bildirim?islem=ayar');if(r.ok)PUSH.ayar=(await r.json()).ayar}catch(e){}}
+ const degisti=d!==PUSH.durum;PUSH.durum=d;PUSH.yukleniyor=false;
+ if(degisti&&(tab==='home'||(tab==='me'&&ptab==='ayar')))render();
+}
+async function pushAc(btn){
+ if(btn)btn.disabled=true;
+ try{
+  const izin=await Notification.requestPermission();
+  if(izin!=='granted'){toast(izin==='denied'?'Bildirim izni verilmedi. Tarayıcı ayarlarından açabilirsin.':'Bildirim izni verilmedi','bell');return}
+  const r=await fetch('api/bildirim?islem=anahtar');const {anahtar}=await r.json();
+  if(!anahtar){toast('Bildirimler sunucuda henüz kurulmadı','bell');return}
+  const k=await swKaydi();if(!k){toast('Bu tarayıcı bildirimleri desteklemiyor','bell');return}
+  const a=await k.pushManager.getSubscription()||await k.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64Diziye(anahtar)});
+  const s=await postJSON('api/bildirim',{islem:'abone',abonelik:a.toJSON()});
+  if(s.err){toast(s.err,'bell');return}
+  S.pushSoruldu=true;save();toast('Bildirimler açıldı','bell');
+ }catch(e){toast('Bildirimler açılamadı, tekrar dene','bell')}
+ finally{if(btn)btn.disabled=false;PUSH.durum=null;pushYenile()}
+}
+async function pushKapat(){
+ try{const k=await swKaydi(),a=k&&await k.pushManager.getSubscription();if(a){await postJSON('api/bildirim',{islem:'iptal',endpoint:a.endpoint});await a.unsubscribe()}}catch(e){}
+ toast('Bu cihazda bildirimler kapatıldı','bell');PUSH.durum=null;pushYenile();
+}
+async function pushAyarKaydet(alan,deger){
+ PUSH.ayar={...PUSH.ayar,[alan]:deger};
+ const r=await postJSON('api/bildirim',{islem:'ayar',...PUSH.ayar});
+ toast(r.err||'Bildirim ayarın kaydedildi','bell');
+}
+async function pushDene(btn){btn.disabled=true;const r=await postJSON('api/bildirim',{islem:'deneme'});btn.disabled=false;toast(r.err||'Deneme bildirimi gönderildi','bell')}
+function bildirimPaneli(){
+ if(!SUNUCU)return '';
+ if(PUSH.durum===null)pushYenile();
+ const d=PUSH.durum;let g='';
+ if(d===null)g='<p class="small muted">Kontrol ediliyor…</p>';
+ else if(d==='ios')g=`<p class="small" style="font-weight:700">iPhone'da bildirim almak için önce Yeşiliz'i ana ekrana ekle:</p><ol class="small muted" style="margin:0;padding-left:20px;font-weight:600"><li>Safari'de alttaki <b>Paylaş</b> düğmesine dokun.</li><li><b>Ana Ekrana Ekle</b>'yi seç.</li><li>Ana ekrandaki Yeşiliz simgesinden aç ve buraya dön.</li></ol>`;
+ else if(d==='yok')g='<p class="small muted" style="font-weight:600">Bu tarayıcı bildirimleri desteklemiyor. Telefonda Chrome ya da Safari, bilgisayarda Chrome ya da Edge ile dene.</p>';
+ else if(d==='reddedildi')g='<p class="small muted" style="font-weight:600">Bu sitenin bildirim izni kapalı. Adres çubuğundaki kilit simgesinden ya da tarayıcının site ayarlarından bildirimlere izin ver, sonra sayfayı yenile.</p>';
+ else if(d==='kapali')g=`<p class="small muted" style="font-weight:600">Seni sıkmayacağız: günde en fazla bir hatırlatma (sadece görev yapmadığın akşamlar), arkadaşın dürttüğünde ya da hediye geldiğinde haber. Gece 22:00-08:00 arası sessiz.</p><button class="btn" data-act="pushac">${ic('bell',18)}Bildirimleri aç</button>`;
+ else g=`<label class="small" style="display:flex;gap:8px;align-items:center;font-weight:700"><input type="checkbox" id="pushHat" ${PUSH.ayar.hatirlatma?'checked':''}> Görev yapmadığım akşamlar hatırlat (19:00 civarı)</label>
+  <label class="small" style="display:flex;gap:8px;align-items:center;font-weight:700"><input type="checkbox" id="pushArk" ${PUSH.ayar.arkadas?'checked':''}> Arkadaşım dürttüğünde ve arkadaşlık isteklerinde haber ver</label>
+  <p class="small muted" style="font-weight:600">Gece 22:00-08:00 arası bildirim gelmez. Günde en fazla 3 anlık bildirim.</p>
+  <div class="tiles"><button class="btn sec" data-act="pushdene">${ic('bell',18)}Deneme gönder</button><button class="btn sec" data-act="pushkapat">Bu cihazda kapat</button></div>`;
+ return `<section class="panel"><h3 style="font-size:22px">Bildirimler${d==='acik'?' <span class="chip ok">Açık</span>':''}</h3>${g}</section>`;
+}
+// İlk görevden sonra bir kez, kibarca sorulur.
+function bildirimOnerisi(){
+ if(!SUNUCU||S.pushSoruldu||PUSH.durum!=='kapali'||!doneToday())return '';
+ return `<section class="banner"><span style="color:var(--leaf-ink)">${ic('bell',28)}</span><p class="small" style="font-weight:700">Serini kaçırmamak için akşamları hatırlatma ister misin? Günde en fazla bir tane.</p><div style="display:flex;flex-direction:column;gap:6px"><button class="btn kucuk" data-act="pushac">Aç</button><button class="btn sec kucuk" data-act="pushsonra">Şimdi değil</button></div></section>`;
+}
+
 /* ---------- hediyeler ve mağaza fiyatları ---------- */
 let hediyeAliniyor=false;
 // Arkadaş dürtmeleri ve paylaşım beğenileri.
@@ -1848,6 +1919,10 @@ function tiklama(e){
  if(a==='kamdon'){KAM.yon=KAM.yon==='user'?'environment':'user';kameraAc(KAM.hedef);return}
  if(a==='kamgeri'){kameraGeri();return}
  if(a==='yilan'){yilanAc();return}
+ if(a==='pushac'){pushAc(el);return}
+ if(a==='pushkapat'){pushKapat();return}
+ if(a==='pushdene'){pushDene(el);return}
+ if(a==='pushsonra'){S.pushSoruldu=true;save();render();return}
  if(a==='ybasla'){yilanBasla();return}
  if(a==='yyon'){yonVer(v);return}
  if(a==='magazagit'){tab='me';ptab='dostu';render();scrollTo(0,0);return}
@@ -1929,6 +2004,8 @@ document.addEventListener('change',async e=>{
  if(t.dataset.ekip!==undefined&&H.taslak){const ad=t.dataset.ekip;H.taslak.ekip=t.checked?[...new Set([...H.taslak.ekip,ad])]:H.taslak.ekip.filter(x=>x!==ad);return}
  if(t.id==='hImg'&&t.files[0]){try{haritaDogrula(t.dataset.tur,await downscale(t.files[0],900))}catch(_){$('#anl').innerHTML='<div class="verdict no">Bu dosya açılamadı. JPG veya PNG bir fotoğraf dene.</div>'}return}
  if(t.id==='avatarImg'&&t.files[0]){avatarYukle(t.files[0]);return}
+ if(t.id==='pushHat'){pushAyarKaydet('hatirlatma',t.checked);return}
+ if(t.id==='pushArk'){pushAyarKaydet('arkadas',t.checked);return}
  if(t.id==='taskImg'&&t.files[0]){const task=TASKS.find(x=>x.id===t.dataset.task);try{verify(task,await downscale(t.files[0],900))}catch(_){$('#anl').innerHTML='<div class="verdict no">Bu dosya açılamadı. JPG veya PNG bir fotoğraf dene.</div>'}}
  if(t.id==='postImg'&&t.files[0]){try{draftImg=await downscale(t.files[0],SUNUCU?480:640);render()}catch(_){toast('Fotoğraf açılamadı','image')}}
  if(t.id==='ntime'){S.notify=t.value||'19:00';save();toast(`Hatırlatma her gün ${S.notify}`,'bell')}

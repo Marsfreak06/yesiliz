@@ -11,6 +11,7 @@
 //   POST /api/sosyal { islem: 'istek' | 'kabul' | 'reddet' | 'cikar' | 'durt', ad }
 //   POST /api/sosyal { islem: 'avatar', resim } | { islem: 'avatarSil' }
 //   POST /api/sosyal { islem: 'kod', kod }         → gizli kodla açılan ürün { urun }
+import { bildirimDene } from './_push.js';
 import { dbVar, redis, oturumBilgi, jsonOku, ciftler, govdeAl, cevap, haftaNo, gunNo, kullaniciAnahtari, adlariGetir, kodOzeti } from './_db.js';
 
 const AVATAR_UST = 60_000; // karakter (yaklaşık 45 KB JPEG)
@@ -229,16 +230,19 @@ export default async function handler(req, res) {
       if (await redis('SISMEMBER', 'istekler:' + me, o)) {
         await redis('SADD', 'arkadas:' + me, o); await redis('SADD', 'arkadas:' + o, me);
         await redis('SREM', 'istekler:' + me, o); await redis('SREM', 'giden:' + o, me);
+        await bildirimDene(o, { baslik: `${ben.ad} ile artık arkadaşsınız`, metin: 'Birlikte görev yapın, ortak serinizi büyütün.', etiket: 'arkadas' }, 'arkadas');
         return cevap(res, 200, { durum: 'arkadas', ad: k.ad, ...(await arkadasListesi(me)) });
       }
       if (Number(await redis('SCARD', 'istekler:' + o)) >= 50) return cevap(res, 429, { hata: 'Bu kullanıcının bekleyen çok fazla isteği var' });
       await redis('SADD', 'istekler:' + o, me); await redis('SADD', 'giden:' + me, o);
+      await bildirimDene(o, { baslik: 'Yeni arkadaşlık isteği', metin: `${ben.ad} seni arkadaş olarak eklemek istiyor.`, etiket: 'arkadas' }, 'arkadas');
       return cevap(res, 200, { durum: 'gonderildi', ad: k.ad, ...(await arkadasListesi(me)) });
     }
     if (g.islem === 'kabul') {
       if (!await redis('SISMEMBER', 'istekler:' + me, o)) return cevap(res, 404, { hata: 'Böyle bir istek yok' });
       await redis('SADD', 'arkadas:' + me, o); await redis('SADD', 'arkadas:' + o, me);
       await redis('SREM', 'istekler:' + me, o); await redis('SREM', 'giden:' + o, me);
+      await bildirimDene(o, { baslik: `${ben.ad} arkadaşlık isteğini kabul etti`, metin: 'Artık ortak seri yapabilir ve birbirinizi dürtebilirsiniz.', etiket: 'arkadas' }, 'arkadas');
       return cevap(res, 200, await arkadasListesi(me));
     }
     if (g.islem === 'reddet') {
@@ -253,6 +257,7 @@ export default async function handler(req, res) {
       if (ilk !== 'OK') return cevap(res, 429, { hata: 'Bu arkadaşını bugün zaten dürttün' });
       await redis('RPUSH', 'bildirim:' + o, JSON.stringify({ tur: 'durt', kimden: ben.ad, t: Date.now() }));
       await redis('EXPIRE', 'bildirim:' + o, 7 * 86400);
+      await bildirimDene(o, { baslik: `${ben.ad} seni dürttü!`, metin: 'Bugünkü görevini yap, ortak seriniz devam etsin.', etiket: 'durt' }, 'arkadas');
       return cevap(res, 200, { tamam: true });
     }
     if (g.islem === 'cikar') {
