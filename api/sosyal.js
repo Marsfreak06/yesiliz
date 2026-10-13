@@ -7,6 +7,7 @@
 //   GET  /api/sosyal?islem=hediyeler                → { hediyeler: [{ miktar, not, t }] } (teslim edilince silinir)
 //   POST /api/sosyal { islem: 'degerlendir', yildiz, metin }
 //   GET  /api/sosyal?islem=okullar                  → { okullar: [{ ad, uye }] }
+//   GET  /api/sosyal?islem=profil&ad=<ad>           → başka bir kullanıcının herkese açık profili
 //   POST /api/sosyal { islem: 'istek' | 'kabul' | 'reddet' | 'cikar' | 'durt', ad }
 //   POST /api/sosyal { islem: 'avatar', resim } | { islem: 'avatarSil' }
 import { dbVar, redis, oturumBilgi, jsonOku, ciftler, govdeAl, cevap, haftaNo, gunNo, kullaniciAnahtari, adlariGetir } from './_db.js';
@@ -141,6 +142,34 @@ export default async function handler(req, res) {
         if (liste.length) await redis('DEL', k);
         if (bildirimler.length) await redis('DEL', b);
         return cevap(res, 200, { hediyeler: liste, bildirimler });
+      }
+      // Başka bir kullanıcının herkese açık profili (yalnızca giriş yapmış kullanıcılara).
+      if (q.islem === 'profil') {
+        if (!ben) return cevap(res, 401, { hata: 'Profilleri görmek için giriş yap' });
+        const o = kullaniciAnahtari(q.ad);
+        const u = jsonOku(await redis('GET', 'kullanici:' + o));
+        if (!u) return cevap(res, 404, { hata: 'Bu kullanıcı bulunamadı' });
+        const d = jsonOku(await redis('GET', 'durum:' + o)) || {};
+        const bugun = gunNo(), son = d.last ? Math.round(Date.parse(d.last + 'T00:00:00Z') / 86400_000) : null;
+        const kayitlar = await redis('SMEMBERS', 'benim:' + o) || [];
+        const alanIdleri = kayitlar.filter(k => String(k).startsWith('a:')).map(k => String(k).slice(2));
+        const alanlar = alanIdleri.length ? await redis('HMGET', 'alanlar', ...alanIdleri) : [];
+        const [aktifGun, arkSayisi, paylasim, ...skorlar] = await Promise.all([
+          redis('ZCARD', 'aktif:' + o), redis('SCARD', 'arkadas:' + o), redis('SCARD', 'akis:benim:' + o),
+          ...TURLER.map(t => redis('ZSCORE', `h:${haftaNo()}:${t}`, o)),
+        ]);
+        // Haftalık şampiyonluk puanı her seferinde doğrudan hesaplanır (birleşik tablo önbellekte olmayabilir).
+        const fuzyon = TURLER.reduce((t, tur, i) => t + (Number(skorlar[i]) || 0) * AGIRLIK[tur], 0);
+        return cevap(res, 200, {
+          ad: u.ad, okul: u.okul || null, olusturma: u.olusturma,
+          seri: son !== null && bugun - son <= 1 ? Number(d.streak) || 0 : 0,
+          enUzun: Number(d.best) || 0, toplam: Number(d.earned) || 0, gorev: Number(d.total) || 0,
+          gorevTurleri: Object.keys(d.counts || {}), perfect: Number(d.perfect) || 0, enIyiOrtak: Number(d.enIyiOrtak) || 0,
+          paylasim: Number(paylasim) || 0, fidan: kayitlar.filter(k => String(k).startsWith('f:')).length,
+          m2: alanlar.reduce((t, a) => t + ((jsonOku(a) || {}).m2 || 0), 0),
+          aktifGun: Number(aktifGun) || 0, haftalik: Math.round(fuzyon), arkadas: Number(arkSayisi) || 0,
+          eq: d.eq || null,
+        });
       }
       if (q.islem === 'arkadaslar') {
         if (!ben) return cevap(res, 401, { hata: 'Önce giriş yap' });

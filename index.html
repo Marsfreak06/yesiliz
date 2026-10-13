@@ -368,6 +368,12 @@ input:focus,textarea:focus{outline:none;border-color:var(--leaf)}
 .ark-satir b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .ark-satir .btn{padding:7px 12px;font-size:14px;border-radius:12px}
 .ark-ekle{display:flex;gap:8px}
+.btn.kucuk{padding:7px 12px;font-size:14px;border-radius:12px;flex:none}
+.post-h .chip{flex:none}
+button.kisi{display:flex;align-items:center;gap:12px;flex:1;min-width:0;border:0;background:none;padding:0;text-align:left;color:inherit;border-radius:14px}
+button.kisi:hover b{text-decoration:underline}
+.lbr[data-act],.pod[data-act]{cursor:pointer}
+.lbr[data-act]:hover{background:var(--soft)}
 .ark-ekle input{flex:1;min-width:0}
 
 /* Camera */
@@ -617,7 +623,6 @@ const CHECKS={
  dark:{q:'Ortam karanlık mı, ışıklar kapalı mı?',f:a=>({score:Math.min(1,a.dark/.6),pass:a.dark>=.45})},
  detail:{q:'Bu net, gerçek bir sahne fotoğrafı mı?',f:a=>({score:Math.min(1,a.detail/12),pass:a.detail>=5})}
 };
-const SAMPLE_FOR={recycle:'recycle',plant:'plant',dark:'dark',detail:'detail'};
 const QUIZ=[
  {q:'Karbon ayak izi neyi ölçer?',o:['Bir kişinin ya da kurumun yol açtığı sera gazı miktarını','Yıllık su tüketimini','Bir şehirdeki ağaç sayısını','Ayakkabıların çevreye bıraktığı izi'],a:0,e:'Karbon ayak izi, faaliyetlerimizin yol açtığı sera gazlarının CO₂ eşdeğeri cinsinden toplamıdır.'},
  {q:'Hangisi yenilenebilir bir enerji kaynağıdır?',o:['Rüzgâr','Kömür','Doğal gaz','Petrol'],a:0,e:'Rüzgâr, güneş, su ve jeotermal kendini yenileyen kaynaklardır.'},
@@ -673,14 +678,6 @@ const RENKLER={r_yesil:['#6fd07c','#5cc062','#4fae5d','#c6f2c4'],r_mavi:['#6fb8e
 let FIYAT={};
 const fiyat=i=>FIYAT[i.id]??i.p;
 const sahipMi=i=>i.p===0||S.owned.includes(i.id);
-const LEAGUE=[['Ayşe K.',612],['Mert D.',540],['Zeynep A.',488],['Emir T.',430],['Defne Ö.',395],['Kerem Y.',350],['Ela N.',300],['Yusuf B.',262],['Elif S.',215],['Can P.',170],['Duru M.',122],['Arda G.',80]];
-const ALLTIME=[['Zeynep A.',5640],['Ayşe K.',4980],['Emir T.',4420],['Mert D.',3910],['Defne Ö.',3300],['Yusuf B.',2870],['Ela N.',2410],['Kerem Y.',1990],['Can P.',1450]];
-const SCHOOLS=[['Cumhuriyet Ortaokulu',48210,1],['Atatürk Anadolu Lisesi',45930],['Barbaros Ortaokulu',39100],['Fen Lisesi',36420],['Mimar Sinan Ortaokulu',28870],['Gazi İlkokulu',21300]];
-const SEEDPOSTS=[
- {id:'s1',a:'Zeynep A.',sub:'7-B',t:Date.parse('2026-10-13T09:10:00+03:00'),x:'Okul bahçesine sınıfça 12 fidan diktik. Her birine bir isim verdik!',img:'plant',likes:24},
- {id:'s2',a:'Mert D.',sub:'8-A',t:Date.parse('2026-10-10T15:40:00+03:00'),x:'Koridora Sıfır Atık köşesi kurduk: mavi kâğıt, sarı plastik, yeşil cam.',img:'recycle',likes:31},
- {id:'s3',a:'Ela N.',sub:'6-C',t:Date.parse('2026-10-05T12:30:00+03:00'),x:'Bugün tabağımda sadece 40 g yemek kaldı. Geçen haftaya göre yarı yarıya azaldı.',img:'detail',likes:12}
-];
 const GUIDE=[
  ['Yeşil yetenek nedir?','Yeşil yetenekler; enerji ve su tasarrufu, atık azaltma, geri dönüşüm, doğayı koruma ve sürdürülebilir çözümler üretme gibi, çevreye duyarlı yaşamak ve çalışmak için gereken bilgi, beceri ve tutumlardır. Gelecekte pek çok meslek bu becerileri bekleyecek.'],
  ['Sürdürülebilirlik okuryazarlığı (OB8) nedir?','Türkiye Yüzyılı Maarif Modeli\'ndeki okuryazarlık becerilerinden biridir. Çevresel, ekonomik ve toplumsal sorunları birlikte düşünebilmeyi, kaynakları bugünü ve geleceği gözeterek kullanmayı ve bu yönde sorumlu kararlar alabilmeyi kapsar. Uygulamadaki görevler bu beceriyi günlük alışkanlığa dönüştürmek için tasarlandı.'],
@@ -854,26 +851,6 @@ function analyze(img){
  return{green:g/n,blue:b/n,yellow:y/n,dark:dark/n,detail:dc?det/dc:0};
 }
 const IMGC={};
-function sampleImg(kind){
- if(IMGC[kind])return IMGC[kind];
- const W=400,H=300,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d',{willReadFrequently:true});const r=rng(hash(kind+'img'));
- const rect=(f,a,b,w,h)=>{x.fillStyle=f;x.fillRect(a,b,w,h)};
- if(kind==='plant'){const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#bfe3f5');g.addColorStop(1,'#eef6ea');x.fillStyle=g;x.fillRect(0,0,W,H);rect('#8a6440',0,235,W,65);
-  for(let i=0;i<80;i++){x.fillStyle=`hsl(${100+r()*40},${45+r()*25}%,${26+r()*22}%)`;x.beginPath();x.ellipse(70+r()*260,50+r()*175,10+r()*26,6+r()*12,r()*3.1,0,7);x.fill()}
-  x.fillStyle='#c46a3c';x.beginPath();x.moveTo(140,205);x.lineTo(260,205);x.lineTo(242,292);x.lineTo(158,292);x.fill();rect('#a9552c',134,198,132,14)}
- else if(kind==='recycle'){rect('#e8e4dc',0,0,W,H);rect('#bdb5a8',0,240,W,60);
-  [['#2f6fd0','#2459a8'],['#f2c230','#cfa21f'],['#2e9a4e','#227a3c']].forEach(([f,l],i)=>{const bx=48+i*108;rect(f,bx,105,92,150);rect(l,bx-6,92,104,18);x.strokeStyle='rgba(255,255,255,.85)';x.lineWidth=5;x.beginPath();x.moveTo(bx+46,150);x.lineTo(bx+66,186);x.lineTo(bx+26,186);x.closePath();x.stroke()})}
- else if(kind==='dark'){rect('#121418',0,0,W,H);rect('#27324c',282,36,92,74);x.fillStyle='#cdd5e6';x.beginPath();x.arc(340,62,9,0,7);x.fill();
-  for(let i=0;i<3;i++){rect('#1b1e25',30+i*120,190,90,12);rect('#181b21',40+i*120,202,8,60);rect('#181b21',102+i*120,202,8,60)}rect('#1a1d23',30,60,180,90)}
- else if(kind==='detail'){for(let yy=0;yy<H;yy+=3)rect(`hsl(28,${38+r()*14}%,${36+r()*16}%)`,0,yy,W,3);
-  x.fillStyle='#f4f3ee';x.beginPath();x.arc(160,150,96,0,7);x.fill();x.strokeStyle='#d9d6cc';x.lineWidth=4;x.beginPath();x.arc(160,150,70,0,7);x.stroke();
-  for(let i=0;i<9;i++){x.fillStyle=`hsl(${20+r()*30},60%,${45+r()*15}%)`;x.beginPath();x.arc(140+r()*40,140+r()*30,3+r()*5,0,7);x.fill()}
-  rect('#d6dade',282,150,96,120);rect('#1d2a22',294,166,72,32);x.fillStyle='#9fe8a8';x.font='bold 19px monospace';x.fillText('0,04kg',298,189)}
- else {rect('#e6dccb',0,0,W,H);const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,'rgba(255,255,255,.25)');g.addColorStop(1,'rgba(0,0,0,.05)');x.fillStyle=g;x.fillRect(0,0,W,H)}
- const amp=kind==='bad'?3:26,im=x.getImageData(0,0,W,H),d=im.data;
- for(let i=0;i<d.length;i+=4){const v=(Math.random()-.5)*2*amp;d[i]+=v;d[i+1]+=v;d[i+2]+=v}
- x.putImageData(im,0,0);return IMGC[kind]=c.toDataURL('image/jpeg',.88);
-}
 function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src})}
 async function downscale(file,max=640){const url=URL.createObjectURL(file);try{const i=await loadImg(url);const k=Math.min(1,max/i.naturalWidth),c=document.createElement('canvas');c.width=Math.round(i.naturalWidth*k);c.height=Math.round(i.naturalHeight*k);c.getContext('2d').drawImage(i,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.72)}finally{URL.revokeObjectURL(url)}}
 
@@ -953,7 +930,7 @@ const mutluMu=()=>doneToday();
 /* ---------- arayüz parçaları ---------- */
 function toast(t,icn='spark'){const el=document.createElement('div');el.className='toast';el.innerHTML=ic(icn,20)+esc(t);$('#toasts').appendChild(el);setTimeout(()=>el.remove(),2800)}
 function sheet(html){$('#layer').innerHTML=`<div class="sheet-wrap" data-act="closebg"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`}
-function closeSheet(){kameraKapat();oyunDurdur();$('#layer').innerHTML=''}
+function closeSheet(){kameraKapat();oyunDurdur();PROFIL=null;$('#layer').innerHTML=''}
 function sheetHead(title,eyebrow=''){return `<div class="sheet-h"><div>${eyebrow?`<p class="label">${eyebrow}</p>`:''}<h3>${title}</h3></div><button class="x" data-act="close" aria-label="Kapat">${ic('x',20)}</button></div>`}
 function push(){
  const st=curStreak();const msg=doneToday()?`Bugünkü görevini yaptın, Filiz çok mutlu! Yarın ${st+1}. gün için yine bekliyoruz.`:`Serini kaybetmek üzeresin! Bugünkü görevini yap ve Seri Dostunu besle. (${st} günlük seri)`;
@@ -1039,7 +1016,7 @@ function gecenZaman(t){
  if(gun<365)return `${Math.floor(gun/30)} ay önce`;
  return `${Math.floor(gun/365)} yıl önce`;
 }
-function postHTML(p,mine){const liked=!!S.liked[p.id],n=p.likes+(liked?1:0),img=p.img?(String(p.img).startsWith('data:')?p.img:sampleImg(p.img)):null;
+function postHTML(p,mine){const liked=!!S.liked[p.id],n=p.likes+(liked?1:0),img=p.img&&String(p.img).startsWith('data:')?p.img:null;
  return `<article class="panel post"><div class="post-h"><span class="av" style="background:${avColor(p.a)}">${initials(p.a)}</span><div style="min-width:0"><b>${esc(p.a)}</b><p class="small muted">${p.sub&&p.sub!=='Az önce'?esc(p.sub)+' · ':''}<time datetime="${new Date(paylasimZamani(p)).toISOString()}">${gecenZaman(paylasimZamani(p))}</time></p></div></div>
  ${p.x?`<p>${esc(p.x)}</p>`:''}${img?`<img src="${img}" alt="${esc(p.a)} paylaşımının fotoğrafı">`:''}
  <div class="post-f">${mine?`<span class="like">${ic('heart',20)}${n}</span><span class="small muted" style="font-weight:600;flex:1">Her beğeni sana +2 puan</span><button class="like" data-act="delpost" data-v="${p.id}" aria-label="Paylaşımı sil">${ic('trash',18)}Sil</button>`:`<button class="like" data-act="like" data-v="${p.id}" aria-pressed="${liked}">${ic('heart',20)}${n}</button><span class="small muted" style="font-weight:600">${liked?`${esc(p.a.split(' ')[0])} +2 puan kazandı`:'Beğen, paylaşana +2 puan gitsin'}</span>`}</div></article>`}
@@ -1053,8 +1030,20 @@ async function akisGetir(zorla){
  AKIS.yukleniyor=false;AKIS.zaman=Date.now();
  if(tab==='feed')render();
 }
+// Akıştaki kişiyle arkadaşlık durumu: arkadaş, istek gönderilmiş, istek gelmiş ya da yok.
+function arkDurumu(ad){
+ if(!ARK)return null;const k=kucukAd(ad),var_=l=>(l||[]).some(a=>kucukAd(a.ad)===k);
+ return var_(ARK.arkadaslar)?'arkadas':var_(ARK.giden)?'giden':var_(ARK.istekler)?'gelen':'yok';
+}
+function arkDugmesi(ad){
+ const d=arkDurumu(ad);if(!d||kucukAd(ad)===kucukAd(USER))return '';
+ if(d==='arkadas')return `<span class="chip ok">${ic('users',14)}Arkadaşın</span>`;
+ if(d==='giden')return `<span class="chip">İstek gönderildi</span>`;
+ if(d==='gelen')return `<button class="btn kucuk" data-act="arkKabul" data-v="${esc(ad)}">Kabul et</button>`;
+ return `<button class="btn sec kucuk" data-act="akisArk" data-v="${esc(ad)}">${ic('userplus',16)}Ekle</button>`;
+}
 function akisGonderiHTML(p){
- return `<article class="panel post"><div class="post-h">${avHTML(p.ad,p.benim)}<div style="min-width:0"><b>${esc(p.ad)}</b><p class="small muted">${p.okul?esc(p.okul)+' · ':''}<time datetime="${new Date(p.t).toISOString()}">${gecenZaman(p.t)}</time></p></div></div>
+ return `<article class="panel post"><div class="post-h"><button class="kisi" data-act="profil" data-v="${esc(p.ad)}">${avHTML(p.ad,p.benim)}<span style="min-width:0"><b>${esc(p.ad)}</b><span class="small muted" style="display:block">${p.okul?esc(p.okul)+' · ':''}<time datetime="${new Date(p.t).toISOString()}">${gecenZaman(p.t)}</time></span></span></button>${p.benim?'':arkDugmesi(p.ad)}</div>
  ${p.metin?`<p>${esc(p.metin)}</p>`:''}${p.resimVar?`<img src="api/akis?resim=${p.id}" alt="${esc(p.ad)} paylaşımının fotoğrafı" loading="lazy">`:''}
  <div class="post-f"><button class="like" data-act="abegen" data-v="${p.id}" aria-pressed="${p.begendim}">${ic('heart',20)}${p.begeni}</button>
  <span class="small muted" style="font-weight:600;flex:1">${p.benim?'Her beğeni sana +2 puan':p.begendim?`${esc(p.ad)} +2 puan kazandı`:'Beğen, paylaşana +2 puan gitsin'}</span>
@@ -1079,7 +1068,7 @@ async function akisSil(id,btn){
 function renderFeed(){
  const ben=USER||'Sen';
  if(SUNUCU){
-  akisGetir();
+  akisGetir();if(ARK===null)arkadaslariGetir(false);
   return `<section class="panel composer"><h3 style="font-size:22px">Çevre için ne yaptın?</h3>
   <textarea id="draft" placeholder="Örn: Sınıfta kâğıt geri dönüşüm kutusu kurduk" maxlength="280" aria-label="Paylaşım metni">${esc(draft)}</textarea>
   ${draftImg?`<img class="preview" src="${draftImg}" alt="Seçilen fotoğraf">`:''}
@@ -1093,8 +1082,7 @@ function renderFeed(){
   ${draftImg?`<img class="preview" src="${draftImg}" alt="Seçilen fotoğraf">`:''}
   <div class="row"><label class="btn sec" style="position:relative">${ic('camera',20)}${draftImg?'Fotoğrafı değiştir':'Fotoğraf ekle'}<input type="file" id="postImg" accept="image/*" style="position:absolute;opacity:0;width:1px;height:1px"></label>
   <button class="btn" data-act="post">${ic('send',20)}Paylaş</button></div></section>
- ${[...S.posts.map(p=>({p:{...p,a:ben},mine:true})),...SEEDPOSTS.map(p=>({p,mine:false}))]
-   .sort((a,b)=>paylasimZamani(b.p)-paylasimZamani(a.p)).map(x=>postHTML(x.p,x.mine)).join('')}`;
+ ${S.posts.map(p=>({...p,a:ben})).sort((a,b)=>paylasimZamani(b)-paylasimZamani(a)).map(p=>postHTML(p,true)).join('')}`;
 }
 // Gerçek kullanıcı adlarında profil fotoğrafı denenir; yoksa baş harfler görünür.
 const gercekKullanici=n=>SUNUCU&&/^[a-zA-Z0-9_.çğıöşüÇĞİÖŞÜ]{3,20}$/.test(n||'');
@@ -1102,8 +1090,9 @@ function avHTML(name,me){
  const img=gercekKullanici(name)?`<img src="api/sosyal?avatar=${encodeURIComponent(name)}${name===USER?'&v='+AVV:''}" alt="" loading="lazy" onerror="this.remove()">`:'';
  return `<span class="av" style="background:${me?'var(--leaf)':avColor(name)}">${initials(name)}${img}</span>`;
 }
-function lbRow(i,name,pts,me,sub=''){return `<div class="lbr ${me?'me':''}"><span class="n">${i}</span>${avHTML(name,me)}<div style="min-width:0"><b>${esc(name)}</b>${sub?`<p class="small muted">${sub}</p>`:''}</div><b>${pts.toLocaleString('tr-TR')}</b></div>`}
-function podium(rows){const top=rows.slice(0,3);return `<div class="podium">${[1,0,2].map(i=>{const r=top[i];if(!r)return '<div></div>';return `<div class="pod p${i+1} ${r.me?'me':''}">${avHTML(r.n,r.me)}<b>${esc(r.n)}</b><span class="pts">${r.p.toLocaleString('tr-TR')}</span><div class="blk">${i+1}</div></div>`}).join('')}</div>`}
+const profilAttr=n=>gercekKullanici(n)?`data-act="profil" data-v="${esc(n)}"`:'';
+function lbRow(i,name,pts,me,sub=''){return `<div class="lbr ${me?'me':''}" ${profilAttr(name)}><span class="n">${i}</span>${avHTML(name,me)}<div style="min-width:0"><b>${esc(name)}</b>${sub?`<p class="small muted">${sub}</p>`:''}</div><b>${pts.toLocaleString('tr-TR')}</b></div>`}
+function podium(rows){const top=rows.slice(0,3);return `<div class="podium">${[1,0,2].map(i=>{const r=top[i];if(!r)return '<div></div>';return `<div class="pod p${i+1} ${r.me?'me':''}" ${profilAttr(r.n)}>${avHTML(r.n,r.me)}<b>${esc(r.n)}</b><span class="pts">${r.p.toLocaleString('tr-TR')}</span><div class="blk">${i+1}</div></div>`}).join('')}</div>`}
 function renderLig(){
  const ben=USER||'Sen';
  const seg=`<div class="seg" role="group">${[['samp','Şampiyonlar'],['week','Haftalık lig'],['school','Okullar']].map(([k,l])=>`<button data-act="lb" data-v="${k}" aria-pressed="${lbtab===k}">${l}</button>`).join('')}</div>`;
@@ -1130,10 +1119,6 @@ function renderLig(){
   rows.sort((a,b)=>b.p-a.p);
   return seg+`<section class="panel"><div class="sec-h" style="margin:0"><h2>Haftalık puan ligi</h2><span class="chip warn">${kalan} gün sonra sıfırlanır</span></div><p class="small muted" style="font-weight:600">Bu hafta görev, quiz, fidan ve sulamadan en çok puan toplayanlar. İlk 10 gösterilir.</p>${podium(rows)}</section><div class="lb">${rows.slice(3).map((r,i)=>lbRow(i+4,r.n,r.p,r.me)).join('')}</div>`;
  }
- if(lbtab==='week'){
-  const rows=[...LEAGUE.map(([n,p])=>({n,p})),{n:ben,p:S.week,me:1}].sort((a,b)=>b.p-a.p);const left=kalan;
-  let h='';rows.forEach((r,i)=>{if(i<3)return;if(i===3)h+='<p class="zone">Güvenli bölge</p>';if(i===rows.length-3)h+='<p class="zone down">Düşme bölgesi</p>';h+=lbRow(i+1,r.n,r.p,r.me,r.me?rankOf(curStreak())[1]:'')});
-  return seg+`<section class="panel"><div class="sec-h" style="margin:0"><h2>Altın Lig</h2><span class="chip warn">${left} gün sonra sıfırlanır</span></div><div class="tiers">${['Bronz','Gümüş','Altın','Zümrüt','Elmas'].map(t=>`<span class="tier ${t==='Altın'?'cur':''}">${t}</span>`).join('')}</div><p class="small muted" style="font-weight:600">İlk 3 Zümrüt Lig'e yükselir, son 3 Gümüş Lig'e düşer. Puanlar her pazartesi sıfırlanır.</p>${podium(rows)}</section><div class="lb">${h}</div>`}
  if(SUNUCU){
   sampiyonlariGetir();
   const o=SAMP&&SAMP.okullar;
@@ -1144,8 +1129,7 @@ function renderLig(){
   ${OKUL?'':`<button class="btn sec" data-act="okuldegis">${ic('book',18)}Okulunu seç</button>`}</section>
   <div class="lb">${o.liste.length?o.liste.map((x,i)=>`<div class="lbr ${kucukAd(x.ad)===benim?'me':''}"><span class="n">${i+1}</span><span class="av" style="background:${avColor(x.ad)}">${ic('book',18)}</span><div style="min-width:0"><b>${esc(x.ad)}</b><p class="small muted">${x.uye} öğrenci puan topladı</p></div><b>${x.s.toLocaleString('tr-TR')}</b></div>`).join(''):'<p class="muted" style="font-weight:600">Bu hafta henüz okul puanı yok. Görev yap, fidan dik, okulun listeye girsin!</p>'}</div>`;
  }
- const rows=SCHOOLS.map(s=>({n:s[0],p:s[1]+(s[2]?S.earned:0),me:!!s[2]})).sort((a,b)=>b.p-a.p);
- return seg+`<p class="small muted" style="font-weight:600">Okulundaki herkesin puanı okul skoruna eklenir.</p><div class="lb">${rows.map((r,i)=>lbRow(i+1,r.n,r.p,r.me,r.me?'Senin okulun':'')).join('')}</div>`;
+ return seg+`<section class="panel"><p class="muted" style="font-weight:600">Sıralamalar, hesapla giriş yapan gerçek kullanıcılardan hesaplanır.</p></section>`;
 }
 function renderMe(){
  const st=curStreak(),nb=BADGES.filter(b=>b.ok(S)).length,ad=USER||'Filiz';
@@ -1165,9 +1149,9 @@ function renderMe(){
    if(ARK===null)arkadaslariGetir(true);
    const a=ARK||{arkadaslar:[],istekler:[],giden:[]};
    body=`<section class="panel"><h3 style="font-size:22px">Arkadaş ekle</h3><form class="ark-ekle" id="arkForm"><input type="text" id="arkAd" placeholder="Kullanıcı adı" autocapitalize="none" spellcheck="false" maxlength="20" aria-label="Arkadaşının kullanıcı adı"><button class="btn">${ic('userplus',18)}Ekle</button></form><p class="small muted" style="font-weight:600">Arkadaşının Yeşiliz kullanıcı adını yaz. İsteğini kabul edince fidan dikerken ve alan temizlerken birbirinizi etiketleyebilirsiniz.</p></section>
-   ${a.istekler.length?`<section class="panel"><h3 style="font-size:20px">Gelen istekler</h3>${a.istekler.map(x=>`<div class="ark-satir">${avHTML(x.ad)}<b>${esc(x.ad)}</b><button class="btn" data-act="arkKabul" data-v="${esc(x.ad)}">Kabul et</button><button class="btn sec" data-act="arkReddet" data-v="${esc(x.ad)}">Reddet</button></div>`).join('')}</section>`:''}
-   <section class="panel"><h3 style="font-size:20px">Arkadaşların (${a.arkadaslar.length})</h3>${ARK===null?'<p class="muted">Yükleniyor…</p>':a.arkadaslar.length?a.arkadaslar.map(x=>`<div class="ark-satir">${avHTML(x.ad)}<b>${esc(x.ad)}</b><button class="btn sec" data-act="arkCikar" data-v="${esc(x.ad)}">Çıkar</button></div>`).join(''):'<p class="small muted" style="font-weight:600">Henüz arkadaşın yok. Yukarıdan ekleyebilirsin.</p>'}</section>
-   ${a.giden.length?`<section class="panel"><h3 style="font-size:20px">Gönderdiğin istekler</h3>${a.giden.map(x=>`<div class="ark-satir">${avHTML(x.ad)}<b>${esc(x.ad)}</b><span class="chip">Bekliyor</span><button class="btn sec" data-act="arkReddet" data-v="${esc(x.ad)}">Geri çek</button></div>`).join('')}</section>`:''}`;
+   ${a.istekler.length?`<section class="panel"><h3 style="font-size:20px">Gelen istekler</h3>${a.istekler.map(x=>`<div class="ark-satir"><button class="kisi" data-act="profil" data-v="${esc(x.ad)}">${avHTML(x.ad)}<b>${esc(x.ad)}</b></button><button class="btn" data-act="arkKabul" data-v="${esc(x.ad)}">Kabul et</button><button class="btn sec" data-act="arkReddet" data-v="${esc(x.ad)}">Reddet</button></div>`).join('')}</section>`:''}
+   <section class="panel"><h3 style="font-size:20px">Arkadaşların (${a.arkadaslar.length})</h3>${ARK===null?'<p class="muted">Yükleniyor…</p>':a.arkadaslar.length?a.arkadaslar.map(x=>`<div class="ark-satir"><button class="kisi" data-act="profil" data-v="${esc(x.ad)}">${avHTML(x.ad)}<b>${esc(x.ad)}</b></button><button class="btn sec" data-act="arkCikar" data-v="${esc(x.ad)}">Çıkar</button></div>`).join(''):'<p class="small muted" style="font-weight:600">Henüz arkadaşın yok. Yukarıdan ekleyebilirsin.</p>'}</section>
+   ${a.giden.length?`<section class="panel"><h3 style="font-size:20px">Gönderdiğin istekler</h3>${a.giden.map(x=>`<div class="ark-satir"><button class="kisi" data-act="profil" data-v="${esc(x.ad)}">${avHTML(x.ad)}<b>${esc(x.ad)}</b></button><span class="chip">Bekliyor</span><button class="btn sec" data-act="arkReddet" data-v="${esc(x.ad)}">Geri çek</button></div>`).join('')}</section>`:''}`;
   }
  } else if(ptab==='rehber'){
   body=`<h3 style="font-size:22px">Yeşil Beceriler Rehberi</h3>${GUIDE.map(([h,p],i)=>`<details class="acc" ${i===0?'open':''}><summary>${h}</summary><p>${p}</p></details>`).join('')}`;
@@ -1457,7 +1441,7 @@ async function arkadaslariGetir(yenidenCiz){
  if(!SUNUCU)return;
  try{const r=await fetch('api/sosyal?islem=arkadaslar');ARK=r.ok?await r.json():{arkadaslar:[],istekler:[],giden:[]}}catch(e){ARK={arkadaslar:[],istekler:[],giden:[]}}
  ortakBonusKontrol();
- if((yenidenCiz&&tab==='me'&&ptab==='ark')||tab==='home')render();
+ if((yenidenCiz&&tab==='me'&&ptab==='ark')||tab==='home'||tab==='feed')render();
  if(H.mod)panelYenile();
 }
 // İkiniz de bugün görev yaptıysanız her arkadaş için günde bir kez +15 puan.
@@ -1477,8 +1461,36 @@ function ortakSeriPaneli(){
  if(!l.length)return `<section class="panel"><div class="duo">${mascot(S.eq,{mood:mutluMu()?'happy':'sleepy'})}<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px"><p class="label">Ortak seri</p><h3 style="font-size:22px">Arkadaşlarınla seri yap</h3><p class="small muted" style="font-weight:600">Arkadaşını ekle. İkiniz de aynı gün görev yaparsanız ortak seriniz büyür ve ikinize de +15 puan.</p></div></div><button class="btn sec" data-act="arkgit">${ic('userplus',18)}Arkadaş ekle</button></section>`;
  const sirali=[...l].sort((x,y)=>(y.ortakSeri||0)-(x.ortakSeri||0)).slice(0,5);
  return `<section class="panel"><div class="sec-h" style="margin:0"><h3 style="font-size:22px">Arkadaşlarınla ortak seri</h3><span class="chip ${doneToday()?'ok':'warn'}">Sen ${doneToday()?'✓':'bekliyor'}</span></div>
- ${sirali.map(a=>`<div class="ark-satir">${avHTML(a.ad)}<b>${esc(a.ad)}<br><span class="small muted">${a.ortakSeri?`${a.ortakSeri} günlük ortak seri`:'Ortak seri yok'} · ${a.bugun?'bugün yaptı ✓':'bugün henüz yapmadı'}</span></b>${a.bugun?`<span class="chip ok">${ic('flame',14)}${a.ortakSeri||0}</span>`:`<button class="btn sec" data-act="durt" data-v="${esc(a.ad)}">${ic('bell',16)}<span>Dürt</span></button>`}</div>`).join('')}
+ ${sirali.map(a=>`<div class="ark-satir"><button class="kisi" data-act="profil" data-v="${esc(a.ad)}">${avHTML(a.ad)}<b>${esc(a.ad)}<br><span class="small muted">${a.ortakSeri?`${a.ortakSeri} günlük ortak seri`:'Ortak seri yok'} · ${a.bugun?'bugün yaptı ✓':'bugün henüz yapmadı'}</span></b></button>${a.bugun?`<span class="chip ok">${ic('flame',14)}${a.ortakSeri||0}</span>`:`<button class="btn sec" data-act="durt" data-v="${esc(a.ad)}">${ic('bell',16)}<span>Dürt</span></button>`}</div>`).join('')}
  <p class="small muted" style="font-weight:600">İkiniz de aynı gün görev ya da quiz yaparsanız ortak seriniz devam eder ve ikinize de +15 puan.${l.length>5?` Tüm arkadaşların: Profil → Arkadaşlar.`:''}</p></section>`;
+}
+// Başka bir kullanıcının profili: başarıları, rozetleri, Filiz'i ve arkadaşlık düğmeleri.
+let PROFIL=null;
+async function profilAc(ad){
+ if(!SUNUCU)return;
+ if(kucukAd(ad)===kucukAd(USER)){closeSheet();tab='me';ptab='rozet';render();scrollTo(0,0);return}
+ PROFIL=ad;
+ sheet(`${sheetHead(esc(ad),'Profil')}<p class="muted" style="font-weight:700">Profil yükleniyor…</p>`);
+ let r;
+ try{const x=await fetch('api/sosyal?islem=profil&ad='+encodeURIComponent(ad));r=await x.json().catch(()=>({}));if(!x.ok)r={hata:r.hata||'Profil açılamadı'}}catch(e){r={hata:'Sunucuya ulaşılamadı'}}
+ if(ARK===null)await arkadaslariGetir(false);
+ if(PROFIL!==ad||!$('#layer .sheet'))return;
+ if(r.hata){sheet(`${sheetHead(esc(ad),'Profil')}<p style="color:var(--coral);font-weight:700">${esc(r.hata)}</p>`);return}
+ const benzer={total:r.gorev,best:r.enUzun,earned:r.toplam,perfect:r.perfect,counts:Object.fromEntries(r.gorevTurleri.map(k=>[k,1])),posts:[],paylasim:r.paylasim,enIyiOrtak:r.enIyiOrtak};
+ const rozetler=BADGES.filter(b=>b.ok(benzer)),gun=Math.max(1,Math.floor((Date.now()-r.olusturma)/DAY)+1);
+ const eq={hat:null,neck:null,eyes:null,giysi:null,renk:'r_yesil',bg:'b_cayir',...(r.eq||{})};
+ const ark=(ARK&&ARK.arkadaslar||[]).find(a=>kucukAd(a.ad)===kucukAd(r.ad));
+ const sayi=(d,e)=>`<div><b>${Number(d).toLocaleString('tr-TR')}</b><span>${e}</span></div>`;
+ sheet(`${sheetHead(esc(r.ad),'Profil')}
+ <div class="acct">${avHTML(r.ad)}<div style="flex:1;min-width:0"><b style="font-size:18px">${esc(r.ad)}</b><p class="small muted" style="font-weight:700">${r.okul?esc(r.okul)+'<br>':''}${gun} gündür Yeşiliz'de · ${tarihYaz(r.olusturma)} tarihinde katıldı</p></div></div>
+ <div class="tiles">${arkDugmesi(r.ad).replace('kucuk','big')||''}${ark&&!ark.bugun?`<button class="btn sec big" data-act="durt" data-v="${esc(r.ad)}">${ic('bell',18)}<span>Dürt</span></button>`:ark?`<span class="chip ok" style="justify-content:center">${ic('flame',14)}${ark.ortakSeri||0} günlük ortak seri</span>`:''}</div>
+ <section class="stage" style="${sahneZemini(eq.bg)}">${mascot(eq,{mood:r.seri>0?'happy':'sleepy'})}</section>
+ <div class="stats">${sayi(r.seri,'Seri')}${sayi(r.enUzun,'En uzun seri')}${sayi(r.toplam,'Toplam puan')}${sayi(r.gorev,'Görev')}</div>
+ <div class="stats">${sayi(r.fidan,'Fidan')}${sayi(r.m2,'Temizlenen m²')}${sayi(r.aktifGun,'Aktif gün')}${sayi(r.haftalik,'Bu hafta')}</div>
+ <h3 style="font-size:20px">Rozetler (${rozetler.length}/${BADGES.length})</h3>
+ ${rozetler.length?`<div class="badges">${rozetler.map(b=>`<div class="badge"><span class="medal">${ic(b.ic,30)}</span><b>${b.n}</b><span>${b.r}</span></div>`).join('')}</div>`:'<p class="small muted" style="font-weight:600">Henüz rozet kazanmamış.</p>'}
+ <p class="small muted" style="font-weight:600">${r.arkadas} arkadaş · ${r.paylasim} paylaşım. "Bu hafta" haftalık şampiyonluk puanıdır.</p>`);
+ $('#layer .sheet .stage .mascot').style.height='200px';
 }
 async function durt(ad,btn){
  btn.disabled=true;
@@ -1489,7 +1501,8 @@ async function durt(ad,btn){
 async function arkIslem(islem,ad){
  const r=await postJSON('api/sosyal',{islem,ad});
  if(r.err){toast(r.err,'users');return}
- ARK={arkadaslar:r.arkadaslar,istekler:r.istekler,giden:r.giden};
+ ARK={arkadaslar:r.arkadaslar,istekler:r.istekler,giden:r.giden,benBugun:r.benBugun};
+ if(PROFIL&&$('#layer .sheet')&&kucukAd(PROFIL)===kucukAd(ad))setTimeout(()=>profilAc(PROFIL),0);
  toast(islem==='istek'?(r.durum==='arkadas'?`${r.ad} ile artık arkadaşsınız!`:`${r.ad} kişisine istek gönderildi`):islem==='kabul'?`${ad} ile artık arkadaşsınız!`:islem==='cikar'?`${ad} arkadaşlarından çıkarıldı`:'İstek kaldırıldı','users');
  render();
 }
@@ -1840,13 +1853,13 @@ function tiklama(e){
  if(a==='okulvazgec'){uygulamaGoster();return}
  if(a==='arkgit'){tab='me';ptab='ark';render();scrollTo(0,0);return}
  if(a==='task'){openTask(v);return}
- if(a==='like'){const p=SEEDPOSTS.find(x=>x.id===v);S.liked[v]=!S.liked[v];if(S.liked[v])toast(`${p.a.split(' ')[0]} +2 puan kazandı`,'heart');commit();return}
  if(a==='abegen'){akisBegen(v);return}
+ if(a==='akisArk'){el.disabled=true;arkIslem('istek',v);return}
+ if(a==='profil'){profilAc(v);return}
  if(a==='asil'){akisSil(v,el);return}
  if(a==='post'&&SUNUCU){akisPaylas(el);return}
  if(a==='post'){const txt=draft.trim();if(!txt&&!draftImg){toast('Paylaşmak için bir yazı ya da fotoğraf ekle','image');return}
-  const p={id:'u'+Date.now(),a:USER||'Sen',sub:'',t:simdi(),x:txt,img:draftImg,likes:0};S.posts.unshift(p);S.posts=S.posts.slice(0,8);draft='';draftImg=null;commit();toast('Paylaşıldı','send');
-  ['Ayşe K.','Mert D.','Defne Ö.'].forEach((n,i)=>setTimeout(()=>{const q=S.posts.find(x=>x.id===p.id);if(!q)return;q.likes++;addPoints(2,`${n} paylaşımını beğendi`);commit()},2200+i*1700));return}
+  const p={id:'u'+Date.now(),a:USER||'Sen',sub:'',t:simdi(),x:txt,img:draftImg,likes:0};S.posts.unshift(p);S.posts=S.posts.slice(0,8);draft='';draftImg=null;commit();toast('Paylaşıldı','send');return}
  if(a==='delpost'){if(el.dataset.sure){S.posts=S.posts.filter(x=>x.id!==v);save();render();toast('Paylaşım silindi','trash')}else{el.dataset.sure=1;el.lastChild.textContent='Emin misin?';setTimeout(()=>{if(el.isConnected){delete el.dataset.sure;el.lastChild.textContent='Sil'}},3000)}return}
  if(a==='delacct'){hesapSil();return}
  if(a==='lb'){lbtab=v;render();return}
