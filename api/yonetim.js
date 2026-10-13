@@ -7,10 +7,12 @@
 //   POST /api/yonetim { islem: 'fiyat', fiyatlar: { ürünKimliği: puan | null } }
 //   POST /api/yonetim { islem: 'sil', tip: 'fidan' | 'alan' | 'gonderi', id }
 //   POST /api/yonetim { islem: 'kodEkle', kod, urun } | { islem: 'kodSil', id }
+//   POST /api/yonetim { islem: 'kullaniciSil', ad, onay }   → onay, kullanıcı adının aynısı olmalı
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { dbVar, redis, cerezOku, jsonOku, ciftler, govdeAl, cevap, haftaNo, kullaniciAnahtari, kodOzeti } from './_db.js';
 import { gonderiSil } from './akis.js';
 import { bildirimDene } from './_push.js';
+import { hesabiTemizle } from './_hesapsil.js';
 
 const OTURUM = 8 * 3600;           // yönetici oturumu 8 saat
 const HEDIYE_UST = 100_000;
@@ -127,6 +129,17 @@ export default async function handler(req, res) {
       await redis('EXPIRE', 'hediye:' + anahtar, 90 * 86400);
       await bildirimDene(anahtar, { baslik: `Hediye geldi! +${miktar.toLocaleString('tr-TR')} puan`, metin: not || 'Yeşiliz ekibinden sana bir hediye. Uygulamayı açınca puanın eklenecek.', etiket: 'hediye' }, 'hediye');
       return cevap(res, 200, { tamam: true, ad: u.ad, miktar });
+    }
+
+    if (g.islem === 'kullaniciSil') {
+      const anahtar = kullaniciAnahtari(g.ad);
+      const u = jsonOku(await redis('GET', 'kullanici:' + anahtar));
+      if (!u) return cevap(res, 404, { hata: 'Kullanıcı bulunamadı' });
+      // Yanlışlıkla silmeyi önlemek için kullanıcı adı ikinci kez yazılır.
+      if (kullaniciAnahtari(g.onay) !== anahtar) return cevap(res, 400, { hata: 'Onay için kullanıcı adını aynen yaz' });
+      await hesabiTemizle(anahtar, u);
+      console.log('yonetim: kullanıcı silindi', anahtar);
+      return cevap(res, 200, { tamam: true, ad: u.ad });
     }
 
     if (g.islem === 'kodEkle') {

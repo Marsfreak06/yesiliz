@@ -1824,7 +1824,8 @@ function yonetimCiz(){
   const ara=kucukAd(YON.ara),l=YON.kul.filter(u=>!ara||kucukAd(u.ad).includes(ara));
   g=`<div class="harita-ozet"><div><b>${YON.kul.length}</b><span>Kullanıcı</span></div><div><b>${YON.kul.filter(u=>u.sonAktif&&idxOf(keyFor(0))-idxOf(u.sonAktif)<=1).length}</b><span>Son 2 günde aktif</span></div><div><b>${YON.kul.reduce((a,u)=>a+u.gorev,0).toLocaleString('tr-TR')}</b><span>Tamamlanan görev</span></div></div>
   <input type="text" id="yonAra" placeholder="Kullanıcı ara" value="${esc(YON.ara)}" aria-label="Kullanıcı ara">
-  <div class="yon-liste">${l.map(u=>`<div class="panel yon-kul"><div class="acct">${avHTML(u.ad)}<div style="flex:1;min-width:0"><b>${esc(u.ad)}</b><p class="small muted" style="font-weight:600">${u.puan.toLocaleString('tr-TR')} puan · ${u.seri} gün seri (en uzun ${u.enUzun}) · ${u.gorev} görev<br>Kayıt ${new Date(u.olusturma).toLocaleDateString('tr-TR')} · son aktif ${u.sonAktif?gunOnceTarih(u.sonAktif):'henüz yok'}</p></div><button class="btn sec" data-act="yonhediye" data-v="${esc(u.ad)}">${ic('star',16)}Hediye</button></div>
+  <div class="yon-liste">${l.map(u=>`<div class="panel yon-kul"><div class="acct">${avHTML(u.ad)}<div style="flex:1;min-width:0"><b>${esc(u.ad)}</b><p class="small muted" style="font-weight:600">${u.puan.toLocaleString('tr-TR')} puan · ${u.seri} gün seri (en uzun ${u.enUzun}) · ${u.gorev} görev<br>Kayıt ${new Date(u.olusturma).toLocaleDateString('tr-TR')} · son aktif ${u.sonAktif?gunOnceTarih(u.sonAktif):'henüz yok'}</p></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn sec kucuk" data-act="yonhediye" data-v="${esc(u.ad)}">${ic('star',16)}Hediye</button><button class="btn sec kucuk" data-act="yonkulsil" data-v="${esc(u.ad)}" style="color:var(--coral)">${ic('trash',16)}Sil</button></div></div>
+   ${YON.silinecek===u.ad?`<form class="yon-kulsil" data-ad="${esc(u.ad)}"><p class="small" style="color:var(--coral);font-weight:800;width:100%">${esc(u.ad)} kalıcı olarak silinecek: ilerlemesi, fidanları, alanları, paylaşımları, arkadaşlıkları ve fotoğrafı. Geri alınamaz. Onaylamak için kullanıcı adını yaz:</p><input type="text" placeholder="${esc(u.ad)}" aria-label="Onay için kullanıcı adı" autocomplete="off" autocapitalize="none" required><button class="btn" style="background:var(--coral);box-shadow:0 4px 0 var(--coral-d)">Kalıcı olarak sil</button><button type="button" class="btn sec" data-act="yonkulsil" data-v="${esc(u.ad)}">Vazgeç</button></form>`:''}
    ${YON.acik===u.ad?`<form class="yon-hediye" data-ad="${esc(u.ad)}"><input type="number" min="1" max="100000" step="1" placeholder="Puan" aria-label="Hediye puan miktarı" required><input type="text" maxlength="140" placeholder="Not (isteğe bağlı)" aria-label="Hediye notu"><button class="btn">Gönder</button></form>`:''}</div>`).join('')||'<p class="muted">Kullanıcı bulunamadı.</p>'}</div>`;
  }else if(YON.sekme==='mag'){
   g=`<p class="small muted" style="font-weight:600">Değiştirdiğin fiyatlar herkesin mağazasında geçerli olur. Kutuyu boşaltırsan ürün varsayılan fiyatına döner.</p>
@@ -1972,6 +1973,7 @@ function tiklama(e){
  if(a==='yonsekme'){YON.sekme=v;yonetimCiz();scrollTo(0,0);return}
  if(a==='yonhediye'){YON.acik=YON.acik===v?null:v;yonetimCiz();setTimeout(()=>document.querySelector('.yon-hediye input')?.focus(),30);return}
  if(a==='yonsil'){yonetimSil(v,el);return}
+ if(a==='yonkulsil'){YON.silinecek=YON.silinecek===v?null:v;YON.acik=null;yonetimCiz();setTimeout(()=>document.querySelector('.yon-kulsil input')?.focus(),30);return}
  if(a==='yonkodsil'){if(!el.dataset.sure){el.dataset.sure=1;el.lastChild.textContent='Emin misin?';return}postJSON('api/yonetim',{islem:'kodSil',id:v}).then(r=>{if(r.err)return toast(r.err,'lock');YON.icerik.kodlar=YON.icerik.kodlar.filter(k=>k.id!==v);toast('Kod silindi','lock');yonetimCiz()});return}
  if(a==='hfiltre'){H.filtre=v;document.querySelectorAll('[data-act="hfiltre"]').forEach(b=>b.classList.toggle('ok',b.dataset.v===v));katmanCiz();return}
  if(a==='konum'){konumaGit();return}
@@ -2036,6 +2038,8 @@ document.addEventListener('submit',e=>{
  if(e.target.id==='yonForm'){e.preventDefault();yonetimGiris();return}
  if(e.target.id==='yonKod'){e.preventDefault();const f=e.target,kod=f.querySelector('input').value.trim(),urun=f.querySelector('select').value;postJSON('api/yonetim',{islem:'kodEkle',kod,urun}).then(r=>{if(r.err)return toast(r.err,'lock');toast('Kod eklendi','lock');yonetimVeri()});return}
  if(e.target.id==='yonFiyat'){e.preventDefault();yonetimFiyat(e.target);return}
+ if(e.target.classList.contains('yon-kulsil')){e.preventDefault();const f=e.target,ad=f.dataset.ad,onay=f.querySelector('input').value.trim();
+  postJSON('api/yonetim',{islem:'kullaniciSil',ad,onay}).then(r=>{if(r.err)return toast(r.err,'trash');toast(`${r.ad} silindi`,'trash');YON.silinecek=null;YON.kul=YON.kul.filter(u=>u.ad!==r.ad);AKIS.zaman=0;H.son=0;SAMP=null;sampZaman=0;yonetimCiz()});return}
  if(e.target.classList.contains('yon-hediye')){e.preventDefault();yonetimHediye(e.target);return}
  if(e.target.id==='arkForm'){e.preventDefault();const ad=$('#arkAd').value.trim();if(ad)arkIslem('istek',ad)}
  if(e.target.id==='authForm'){e.preventDefault();authGonder()}
