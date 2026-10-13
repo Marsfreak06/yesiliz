@@ -1,5 +1,8 @@
-// Veritabanı (Upstash Redis REST) ve oturum yardımcıları.
-// Bağlantı bilgileri Vercel'de Upstash eklenince otomatik gelen ortam değişkenlerinden okunur.
+// Veritabanı ve oturum yardımcıları.
+// İki tür Redis bağlantısı desteklenir; bilgiler Vercel'de veritabanı projeye bağlanınca gelen
+// ortam değişkenlerinden okunur:
+//   - Upstash (HTTP/REST): KV_REST_API_URL + KV_REST_API_TOKEN ya da UPSTASH_REDIS_REST_URL + _TOKEN
+//   - Redis Cloud vb. (klasik bağlantı): REDIS_URL
 import { scrypt as _scrypt } from 'node:crypto';
 import { promisify } from 'node:util';
 
@@ -8,14 +11,38 @@ const scrypt = promisify(_scrypt);
 function baglanti() {
   const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  return url && token ? { url, token } : null;
+  if (url && token) return { tur: 'rest', url, token };
+  if (process.env.REDIS_URL) return { tur: 'tcp' };
+  return null;
 }
 
 export const dbVar = () => baglanti() !== null;
 
+// Klasik Redis bağlantısı fonksiyon örneği yaşadıkça yeniden kullanılır.
+let istemciSozu = null;
+function tcpIstemci() {
+  if (!istemciSozu) {
+    istemciSozu = (async () => {
+      const { createClient } = await import('redis');
+      const c = createClient({
+        url: process.env.REDIS_URL,
+        socket: { connectTimeout: 5000, reconnectStrategy: deneme => (deneme > 2 ? false : 200) },
+      });
+      c.on('error', e => console.error('redis', e.message));
+      await c.connect();
+      return c;
+    })().catch(e => { istemciSozu = null; throw e; });
+  }
+  return istemciSozu;
+}
+
 export async function redis(...komut) {
   const b = baglanti();
   if (!b) throw new Error('Veritabanı bağlı değil');
+  if (b.tur === 'tcp') {
+    const c = await tcpIstemci();
+    return await c.sendCommand(komut.map(String));
+  }
   const r = await fetch(b.url, {
     method: 'POST',
     headers: { Authorization: `Bearer ${b.token}`, 'Content-Type': 'application/json' },
