@@ -257,6 +257,10 @@ button.chip{border:0;cursor:pointer;font-family:inherit}
 .item .price{font-variant-numeric:tabular-nums;color:var(--leaf-ink)}
 .item .price.lack{color:var(--muted)}
 .item{position:relative}
+.duyuru{position:relative;display:flex;gap:12px;align-items:flex-start;background:#fff6d6;border:2px solid #f2b632;border-radius:20px;padding:14px 40px 14px 14px;margin-bottom:16px;color:#3a2a00}
+.duyuru b{font-size:16px}.duyuru p{margin:4px 0 10px;font-size:14px;font-weight:600;line-height:1.4}
+.duyuru-ic{flex:0 0 auto;width:40px;height:40px;border-radius:12px;background:#f2b632;color:#3a2a00;display:grid;place-items:center}
+.duyuru-kapat{position:absolute;top:6px;right:8px;border:0;background:none;font-size:24px;line-height:1;color:#3a2a00;padding:6px}
 .item .etiket{position:absolute;top:6px;left:6px;z-index:1;font-size:10.5px;line-height:1;padding:4px 7px;border-radius:99px;background:#f2b632;color:#3a2a00;font-weight:900}
 .item.efsane{border-color:#e8b923;box-shadow:0 4px 0 #c99a1e}
 .item.efsane .etiket{background:linear-gradient(90deg,#f2b632,#ffe680,#f2b632);}
@@ -1055,13 +1059,35 @@ function konfeti(n=140){
 }
 
 /* ---------- ekranlar ---------- */
+// Kısa süreli duyuru: 14 Ekim 2026 15:00 (Türkiye saati) sonrasında kendiliğinden kaybolur; kapatılan bir daha görünmez.
+const DUYURU_BITIS=Date.UTC(2026,9,14,12,0);
+function duyuru(){
+ if(!SUNUCU||Date.now()>DUYURU_BITIS)return '';
+ try{if(localStorage.getItem('yesiliz-duyuru-ad'))return ''}catch(e){}
+ return `<section class="duyuru" role="status"><span class="duyuru-ic">${ic('user',22)}</span><div><b>Artık kullanıcı adını değiştirebilirsin!</b><p>Lütfen gerçek adını ya da arkadaşlarının seni tanıyacağı bir takma ad kullan; rastgele isimlerde arkadaşların seni bulamıyor.</p><button class="btn kucuk" data-act="duyuruac">Adımı değiştir</button></div><button class="duyuru-kapat" data-act="duyurukapat" aria-label="Duyuruyu kapat">×</button></section>`;
+}
+async function adDegistir(){
+ const ad=($('#yeniAd')?.value||'').trim(),hata=$('#adHata');
+ if(!/^[a-zA-Z0-9_.çğıöşüÇĞİÖŞÜ]{3,20}$/.test(ad)){hata.textContent='3-20 karakter olmalı. Harf, rakam, nokta ve alt çizgi kullanabilirsin; boşluk yerine nokta ya da alt çizgi koy.';return}
+ if(ad===USER){hata.textContent='Bu zaten senin adın.';return}
+ hata.textContent='';
+ if(kayitZamani){clearTimeout(kayitZamani);await sunucuyaKaydet()}
+ const r=await postJSON('api/hesap',{islem:'adDegistir',ad});
+ if(r.err){hata.textContent=r.err;return}
+ // Bu cihazdaki yerel kayıt yeni ada taşınır, sonra her şey sunucudan tazelenir.
+ let yerel=null;try{yerel=localStorage.getItem(yerelAnahtar())}catch(e){}
+ USER=r.kullanici;
+ try{if(yerel)localStorage.setItem(yerelAnahtar(),yerel);localStorage.setItem('yesiliz-duyuru-ad','1')}catch(e){}
+ toast(`Yeni adın: ${r.kullanici}. Girişte artık bu adı kullan.`,'check');
+ setTimeout(()=>location.reload(),1800);
+}
 function renderHome(){
  const st=curStreak(),rk=rankOf(st),nx=nextRank(st),q=todaysQuote(),qv=S.quote[today()],qz=S.quiz[today()];
  const lastI=S.last?idxOf(S.last):-1e9;
  const days=[...Array(7)].map((_,i)=>{const off=i-6,ix=idxOf(dk(off)),on=st>0&&ix<=lastI&&ix>lastI-st;const wd=new Date(Date.now()+(S.offset+off)*DAY).getDay();return `<div><span class="dot ${on?'on':''} ${off===0?'today':''}">${on?ic('check',16):''}</span>${off===0?'Bugün':DAYS[wd]}</div>`}).join('');
  const prog=nx?Math.round((st-rk[0])/(nx[0]-rk[0])*100):100,nb=nextBonusAt(st);
  const dl=dailyTasks(),dc=dl.filter(isDone).length;
- return `
+ return `${duyuru()}
  <section class="hero" aria-label="Günlük seri">
   <div class="hero-top">${FLAME_SVG.replace('class="flame"',`class="flame ${doneToday()?'':'off'}"`)}<div><div class="streak-num">${st}</div><div class="streak-lbl">günlük seri</div></div><span class="rank-chip">${ic('trophy',16)}${rk[1]}</span></div>
   ${nx?`<div><div class="prog-lbl"><span>Sıradaki unvan: ${nx[1]}</span><span>${st}/${nx[0]}</span></div><div class="bar"><i style="width:${prog}%"></i></div></div>`:''}
@@ -1284,7 +1310,7 @@ function renderMe(){
   const r=S.rating;
   body=`${SUNUCU?`<section class="panel"><div class="acct">${avHTML(USER,true)}<div style="flex:1;min-width:0"><p class="label">Hesap</p><b>${esc(USER)}</b></div><button class="btn sec" data-act="logout">${ic('out',18)}Çıkış yap</button></div>
    <div class="acct"><span class="ti c-detail" style="width:42px;height:42px;border-radius:12px">${ic('book',22)}</span><div style="flex:1;min-width:0"><p class="label">Okul</p><b>${OKUL?esc(OKUL):'Seçilmedi'}</b></div><button class="btn sec" data-act="okuldegis">Değiştir</button></div><p class="small muted" style="font-weight:600">İlerlemen hesabına kaydediliyor. Başka bir cihazdan giriş yapınca kaldığın yerden devam edersin.</p>
-   <details class="acc"><summary>Hesabımı sil</summary><div class="field" style="padding-bottom:16px"><p class="small muted">Hesabın ve bütün ilerlemen kalıcı olarak silinir, geri alınamaz. Onaylamak için şifreni yaz.</p><label for="silSifre">Şifre</label><input type="password" id="silSifre" autocomplete="current-password"><p class="auth-err" id="silHata" role="alert"></p><button class="btn sec" data-act="delacct" style="color:var(--coral)">${ic('trash',18)}Hesabımı kalıcı olarak sil</button></div></details></section>`:''}
+   <details class="acc" id="adDetay"><summary>Kullanıcı adını değiştir</summary><div class="field" style="padding-bottom:16px"><p class="small muted">Lütfen gerçek adını ya da arkadaşlarının seni tanıyacağı bir takma ad kullan (ör. ayse.yilmaz). 3-20 karakter; harf, rakam, nokta ve alt çizgi kullanabilirsin. Girişte artık yeni adını yazarsın, şifren aynı kalır. Adını günde bir kez değiştirebilirsin.</p><label for="yeniAd">Yeni kullanıcı adı</label><input type="text" id="yeniAd" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" value="${esc(USER)}"><p class="auth-err" id="adHata" role="alert"></p><button class="btn" data-act="addegis">${ic('check',18)}Adımı değiştir</button></div></details><details class="acc"><summary>Hesabımı sil</summary><div class="field" style="padding-bottom:16px"><p class="small muted">Hesabın ve bütün ilerlemen kalıcı olarak silinir, geri alınamaz. Onaylamak için şifreni yaz.</p><label for="silSifre">Şifre</label><input type="password" id="silSifre" autocomplete="current-password"><p class="auth-err" id="silHata" role="alert"></p><button class="btn sec" data-act="delacct" style="color:var(--coral)">${ic('trash',18)}Hesabımı kalıcı olarak sil</button></div></details></section>`:''}
   <section class="panel"><h3 style="font-size:22px">Fotoğrafların ve verilerin</h3>
    <p class="small" style="font-weight:600">Görev, fidan ve temizlik fotoğrafların sadece kontrol için yapay zekâya (Google Gemini) gönderilir. Biz onları hiçbir yerde saklamayız. Google bu fotoğrafları kendi kullanım koşullarına göre işler.</p>
    <p class="small muted" style="font-weight:600">Akışta paylaştığın fotoğraflar sadece bu cihazda durur. Paylaşımı "Sil" düğmesiyle istediğin zaman kaldırabilirsin.${SUNUCU?' Hesabında puanın, serin, ayarların ve arkadaş listen tutulur.':''}</p>
@@ -2087,6 +2113,9 @@ function tiklama(e){
   const p={id:'u'+Date.now(),a:USER||'Sen',sub:'',t:simdi(),x:txt,img:draftImg,likes:0};S.posts.unshift(p);S.posts=S.posts.slice(0,8);draft='';draftImg=null;commit();toast('Paylaşıldı','send');return}
  if(a==='delpost'){if(el.dataset.sure){S.posts=S.posts.filter(x=>x.id!==v);save();render();toast('Paylaşım silindi','trash')}else{el.dataset.sure=1;el.lastChild.textContent='Emin misin?';setTimeout(()=>{if(el.isConnected){delete el.dataset.sure;el.lastChild.textContent='Sil'}},3000)}return}
  if(a==='delacct'){hesapSil();return}
+ if(a==='addegis'){adDegistir();return}
+ if(a==='duyurukapat'){try{localStorage.setItem('yesiliz-duyuru-ad','1')}catch(e){}el.closest('.duyuru')?.remove();return}
+ if(a==='duyuruac'){tab='me';ptab='ayar';render();scrollTo(0,0);setTimeout(()=>{const d=$('#adDetay');if(d){d.open=true;d.scrollIntoView({block:'center'});$('#yeniAd')?.focus()}},60);return}
  if(a==='lb'){lbtab=v;render();return}
  if(a==='ptab'){ptab=v;render();return}
  if(a==='cat'){shopCat=v;render();return}

@@ -3,9 +3,11 @@
 //   POST /api/hesap { islem: 'kayit' | 'giris', ad, sifre }
 //   POST /api/hesap { islem: 'cikis' }
 //   POST /api/hesap { islem: 'okul', okul } → okul adını kaydeder
+//   POST /api/hesap { islem: 'adDegistir', ad } → kullanıcı adını değiştirir (günde bir kez), kayıtları taşır
 //   PUT  /api/hesap { durum }            → ilerlemeyi kaydeder
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { hesabiTemizle } from './_hesapsil.js';
+import { hesabiTasi } from './_hesaptasi.js';
 import { dbVar, redis, cerezOku, gecerliJeton, oturumKullanici, oturumDegeri, sifreOzeti, haftaNo, gunNo } from './_db.js';
 
 // Oturum 180 gün sürer ve site her açıldığında yenilenir; düzenli kullanan bir daha şifre girmez.
@@ -13,6 +15,7 @@ const OTURUM_SURESI = 60 * 60 * 24 * 180;
 const AD_KURALI = /^[a-zA-Z0-9_.çğıöşüÇĞİÖŞÜ]{3,20}$/;
 const EN_BUYUK_DURUM = 300_000;
 const HAFTALIK_PUAN_UST = 3000;
+const AD_BEKLEME = 24 * 3600_000;
 
 function cevap(res, kod, veri) {
   res.setHeader('Cache-Control', 'no-store');
@@ -115,6 +118,36 @@ export default async function handler(req, res) {
       k.okul = await redis('HGET', 'okul:ad', yeni) || okul;
       await redis('SET', 'kullanici:' + anahtar, JSON.stringify(k));
       return cevap(res, 200, { okul: k.okul });
+    }
+
+    if (g.islem === 'adDegistir') {
+      const eski = await oturumKullanici(req);
+      const k = eski && await kullaniciAl(eski);
+      if (!k) return cevap(res, 401, { hata: 'Oturumun kapanmış, tekrar giriş yap' });
+      const yeniAd = String(g.ad || '').trim();
+      if (!AD_KURALI.test(yeniAd)) {
+        return cevap(res, 400, { hata: 'Kullanıcı adı 3-20 karakter olmalı. Harf, rakam, nokta ve alt çizgi kullanabilirsin.' });
+      }
+      if (yeniAd === k.ad) return cevap(res, 400, { hata: 'Bu zaten senin adın.' });
+      if (k.adDegisim && Date.now() - k.adDegisim < AD_BEKLEME) {
+        return cevap(res, 429, { hata: 'Adını günde en fazla bir kez değiştirebilirsin. Yarın tekrar dene.' });
+      }
+      const yeni = yeniAd.toLocaleLowerCase('tr-TR');
+      const kayit = JSON.stringify({ ...k, ad: yeniAd, adDegisim: Date.now() });
+      if (yeni === eski) {
+        // Sadece büyük-küçük harf değişti; anahtar aynı kalır.
+        await redis('SET', 'kullanici:' + eski, kayit);
+      } else {
+        // Yeni ad önce kapılır, böylece aynı anda başka biri aynı adı alamaz.
+        if (await redis('SET', 'kullanici:' + yeni, kayit, 'NX') !== 'OK') {
+          return cevap(res, 409, { hata: 'Bu kullanıcı adı alınmış, başka bir ad dene.' });
+        }
+        await hesabiTasi(eski, yeni, k.ad, yeniAd);
+        await redis('DEL', 'kullanici:' + eski);
+        // Bu cihazın oturumu yeni ada geçer; diğer cihazlarda yeniden giriş gerekir.
+        await redis('SET', 'oturum:' + cerezOku(req, 'oturum'), oturumDegeri(yeni, k.olusturma), 'EX', OTURUM_SURESI);
+      }
+      return cevap(res, 200, { kullanici: yeniAd });
     }
 
     if (g.islem === 'cikis') {
