@@ -3,7 +3,10 @@
 Öğrencilerin her gün küçük bir çevre görevi yapıp seri, puan ve rozet topladığı iklim uygulaması.
 
 - Günlük seri, rütbeler ve 7 günlük seri bonusu
-- Ortak maskot Filiz, puan mağazası, rozetler
+- Arkadaşlarla ortak seri (ikisi de aynı gün görev yaparsa) ve dürtme
+- Kayıtta okul seçimi ve okullar arası haftalık yarış
+- Herkese açık Yeşil Akış (paylaşım, beğeni, +2 puan)
+- Seri Dostu Filiz, puan mağazası, rozetler
 - Gemini ile fotoğraflı görev doğrulama (fotoğraflar saklanmaz)
 - Yeşil Harita: dikilen fidanlar (kim, ne zaman, son sulama) ve çöpten temizlenen alanlar
 - Fidan sulama (fidanın 150 m yakınında olmak gerekir)
@@ -23,7 +26,7 @@
    - `GEMINI_MODEL` (isteğe bağlı): boş bırakılırsa `gemini-3.5-flash`, sonra yedek modeller denenir
 3. Değişkeni ekledikten sonra Deployments → son yayın → Redeploy.
 
-`api` klasöründeki her dosya bir uç noktadır: `/api/dogrula`, `/api/sohbet`, `/api/hesap`, `/api/harita`, `/api/sosyal`. `_` ile başlayan dosyalar ortak yardımcılardır. Anahtar hiçbir zaman depoya yazılmaz.
+`api` klasöründeki her dosya bir uç noktadır: `/api/dogrula`, `/api/sohbet`, `/api/hesap`, `/api/harita`, `/api/sosyal`, `/api/akis`, `/api/yonetim`. `_` ile başlayan dosyalar ortak yardımcılardır. Anahtar hiçbir zaman depoya yazılmaz.
 
 ## Veritabanı (Redis)
 

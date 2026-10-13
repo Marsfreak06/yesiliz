@@ -6,9 +6,10 @@
 //   GET  /api/sosyal?islem=magaza                   → { fiyat: { ürünKimliği: puan } }
 //   GET  /api/sosyal?islem=hediyeler                → { hediyeler: [{ miktar, not, t }] } (teslim edilince silinir)
 //   POST /api/sosyal { islem: 'degerlendir', yildiz, metin }
-//   POST /api/sosyal { islem: 'istek' | 'kabul' | 'reddet' | 'cikar', ad }
+//   GET  /api/sosyal?islem=okullar                  → { okullar: [{ ad, uye }] }
+//   POST /api/sosyal { islem: 'istek' | 'kabul' | 'reddet' | 'cikar' | 'durt', ad }
 //   POST /api/sosyal { islem: 'avatar', resim } | { islem: 'avatarSil' }
-import { dbVar, redis, oturumBilgi, jsonOku, ciftler, govdeAl, cevap, haftaNo, kullaniciAnahtari, adlariGetir } from './_db.js';
+import { dbVar, redis, oturumBilgi, jsonOku, ciftler, govdeAl, cevap, haftaNo, gunNo, kullaniciAnahtari, adlariGetir } from './_db.js';
 
 const AVATAR_UST = 60_000; // karakter (yaklaşık 45 KB JPEG)
 const TURLER = ['fidan', 'alan', 'sulama', 'puan'];
@@ -48,13 +49,51 @@ async function degerlendirmeOzeti() {
   return { sayi, ortalama, dagilim };
 }
 
+// Kullanıcının son 60 gündeki aktif günleri (görev ya da quiz yaptığı günler).
+async function aktifGunler(anahtar, bugun) {
+  return new Set((await redis('ZRANGEBYSCORE', 'aktif:' + anahtar, bugun - 60, bugun) || []).map(Number));
+}
+
+// Ortak seri: ikisinin de aktif olduğu art arda günler. Bugün ikisi de yapmadıysa dünden geriye sayılır.
+function ortakSeri(a, b, bugun) {
+  let g = a.has(bugun) && b.has(bugun) ? bugun : bugun - 1, n = 0;
+  while (a.has(g) && b.has(g)) { n++; g--; }
+  return n;
+}
+
 async function arkadasListesi(anahtar) {
   const [ark, ist, gid] = await Promise.all([
     redis('SMEMBERS', 'arkadas:' + anahtar), redis('SMEMBERS', 'istekler:' + anahtar), redis('SMEMBERS', 'giden:' + anahtar),
   ]);
   const adlar = await adlariGetir([...ark, ...ist, ...gid]);
-  const liste = l => l.filter(a => adlar[a]).map(a => ({ ad: adlar[a] })).sort((x, y) => x.ad.localeCompare(y.ad, 'tr'));
-  return { arkadaslar: liste(ark), istekler: liste(ist), giden: liste(gid) };
+  const sirala = l => l.sort((x, y) => x.ad.localeCompare(y.ad, 'tr'));
+  const liste = l => sirala(l.filter(a => adlar[a]).map(a => ({ ad: adlar[a] })));
+  const bugun = gunNo(), benim = await aktifGunler(anahtar, bugun);
+  const arkadaslar = [];
+  for (const a of ark) {
+    if (!adlar[a]) continue;
+    const onun = await aktifGunler(a, bugun);
+    arkadaslar.push({ ad: adlar[a], ortakSeri: ortakSeri(benim, onun, bugun), bugun: onun.has(bugun) });
+  }
+  return { arkadaslar: sirala(arkadaslar), istekler: liste(ist), giden: liste(gid), benBugun: benim.has(bugun) };
+}
+
+// Okul sıralaması: öğrencilerin bu haftaki şampiyonluk puanları toplanır.
+async function okulSiralamasi(hafta, ben) {
+  const uyeler = ciftler(await redis('ZREVRANGE', `h:${hafta}:fuzyon`, 0, -1, 'WITHSCORES'));
+  if (!uyeler.length) return { liste: [], benim: null };
+  const kayitlar = await redis('MGET', ...uyeler.map(([a]) => 'kullanici:' + a));
+  const toplam = new Map();
+  uyeler.forEach(([a, s], i) => {
+    const u = jsonOku(kayitlar[i]);
+    if (!u || !u.okul) return;
+    const k = u.okul.toLocaleLowerCase('tr-TR'), o = toplam.get(k) || { ad: u.okul, s: 0, uye: 0 };
+    o.s += Number(s) || 0; o.uye++; toplam.set(k, o);
+  });
+  const liste = [...toplam.values()].map(o => ({ ...o, s: Math.round(o.s) })).filter(o => o.s > 0).sort((x, y) => y.s - x.s);
+  let benim = null;
+  if (ben) { const u = jsonOku(await redis('GET', 'kullanici:' + ben.anahtar)); benim = u && u.okul || null; }
+  return { liste: liste.slice(0, 20), benim };
 }
 
 export default async function handler(req, res) {
@@ -73,6 +112,13 @@ export default async function handler(req, res) {
         return res.status(200).end(Buffer.from(m[1], 'base64'));
       }
       if (q.islem === 'degerlendirmeler') return cevap(res, 200, await degerlendirmeOzeti());
+      // Kayıtta öneri olarak gösterilen okul listesi (öğrenci sayısına göre).
+      if (q.islem === 'okullar') {
+        const [uye, ad] = await Promise.all([redis('HGETALL', 'okul:uye'), redis('HGETALL', 'okul:ad')]);
+        const adlar = Object.fromEntries(ciftler(ad));
+        const okullar = ciftler(uye).map(([k, n]) => ({ ad: adlar[k], uye: Number(n) })).filter(o => o.ad && o.uye > 0).sort((x, y) => y.uye - x.uye);
+        return cevap(res, 200, { okullar: okullar.slice(0, 300) });
+      }
       // Yöneticinin değiştirdiği mağaza fiyatları (yalnızca değişenler döner).
       if (q.islem === 'magaza') {
         const fiyat = {};
@@ -83,15 +129,18 @@ export default async function handler(req, res) {
       if (q.islem === 'sampiyonlar') {
         const h = haftaNo();
         const [bu, gecen] = await Promise.all([siralama(h, ben), siralama(h - 1, null)]);
-        return cevap(res, 200, { hafta: bu, gecen: gecen.fuzyon.slice(0, 3), agirlik: AGIRLIK });
+        const okullar = await okulSiralamasi(h, ben);
+        return cevap(res, 200, { hafta: bu, gecen: gecen.fuzyon.slice(0, 3), okullar, agirlik: AGIRLIK });
       }
       // Yöneticinin gönderdiği bekleyen hediyeler: bir kez teslim edilir, sonra silinir.
       if (q.islem === 'hediyeler') {
         if (!ben) return cevap(res, 401, { hata: 'Önce giriş yap' });
-        const k = 'hediye:' + ben.anahtar;
+        const k = 'hediye:' + ben.anahtar, b = 'bildirim:' + ben.anahtar;
         const liste = (await redis('LRANGE', k, 0, -1) || []).map(jsonOku).filter(h => h && h.miktar > 0);
+        const bildirimler = (await redis('LRANGE', b, 0, -1) || []).map(jsonOku).filter(Boolean);
         if (liste.length) await redis('DEL', k);
-        return cevap(res, 200, { hediyeler: liste });
+        if (bildirimler.length) await redis('DEL', b);
+        return cevap(res, 200, { hediyeler: liste, bildirimler });
       }
       if (q.islem === 'arkadaslar') {
         if (!ben) return cevap(res, 401, { hata: 'Önce giriş yap' });
@@ -155,6 +204,14 @@ export default async function handler(req, res) {
       // Gönderdiğim isteği geri çekmek için de kullanılır.
       await redis('SREM', 'giden:' + me, o); await redis('SREM', 'istekler:' + o, me);
       return cevap(res, 200, await arkadasListesi(me));
+    }
+    if (g.islem === 'durt') {
+      if (!await redis('SISMEMBER', 'arkadas:' + me, o)) return cevap(res, 403, { hata: 'Sadece arkadaşlarını dürtebilirsin' });
+      const ilk = await redis('SET', `durt:${me}:${o}:${gunNo()}`, '1', 'NX', 'EX', 90000);
+      if (ilk !== 'OK') return cevap(res, 429, { hata: 'Bu arkadaşını bugün zaten dürttün' });
+      await redis('RPUSH', 'bildirim:' + o, JSON.stringify({ tur: 'durt', kimden: ben.ad, t: Date.now() }));
+      await redis('EXPIRE', 'bildirim:' + o, 7 * 86400);
+      return cevap(res, 200, { tamam: true });
     }
     if (g.islem === 'cikar') {
       await redis('SREM', 'arkadas:' + me, o); await redis('SREM', 'arkadas:' + o, me);

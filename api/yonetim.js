@@ -5,9 +5,10 @@
 //   POST /api/yonetim { islem: 'giris', sifre } | { islem: 'cikis' }
 //   POST /api/yonetim { islem: 'hediye', ad, miktar, not }
 //   POST /api/yonetim { islem: 'fiyat', fiyatlar: { ürünKimliği: puan | null } }
-//   POST /api/yonetim { islem: 'sil', tip: 'fidan' | 'alan', id }
+//   POST /api/yonetim { islem: 'sil', tip: 'fidan' | 'alan' | 'gonderi', id }
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { dbVar, redis, cerezOku, jsonOku, ciftler, govdeAl, cevap, haftaNo, kullaniciAnahtari } from './_db.js';
+import { gonderiSil } from './akis.js';
 
 const OTURUM = 8 * 3600;           // yönetici oturumu 8 saat
 const HEDIYE_UST = 100_000;
@@ -69,8 +70,9 @@ export default async function handler(req, res) {
       if (!await yoneticiMi(req)) return cevap(res, 401, { hata: 'Yönetici girişi gerekli' });
       if (q.islem === 'kullanicilar') return cevap(res, 200, { kullanicilar: await tumKullanicilar() });
       if (q.islem === 'icerik') {
-        const [f, a, d, p] = await Promise.all([
+        const [f, a, d, p, gn] = await Promise.all([
           redis('HGETALL', 'fidanlar'), redis('HGETALL', 'alanlar'), redis('HGETALL', 'degerlendirmeler'), redis('HGETALL', 'magaza:fiyat'),
+          redis('HGETALL', 'akis:gonderi'),
         ]);
         const fiyat = {};
         for (const [id, v] of ciftler(p)) fiyat[id] = Number(v);
@@ -78,6 +80,7 @@ export default async function handler(req, res) {
           fidanlar: ciftler(f).map(([, v]) => jsonOku(v)).filter(Boolean).sort((x, y) => y.t - x.t),
           alanlar: ciftler(a).map(([, v]) => jsonOku(v)).filter(Boolean).sort((x, y) => y.t - x.t),
           degerlendirmeler: ciftler(d).map(([, v]) => jsonOku(v)).filter(Boolean).sort((x, y) => y.t - x.t),
+          gonderiler: ciftler(gn).map(([, v]) => jsonOku(v)).filter(Boolean).sort((x, y) => y.t - x.t),
           fiyat,
         });
       }
@@ -129,6 +132,11 @@ export default async function handler(req, res) {
         await redis('HSET', 'magaza:fiyat', id, v); n++;
       }
       return cevap(res, 200, { tamam: true, degisen: n });
+    }
+
+    if (g.islem === 'sil' && g.tip === 'gonderi') {
+      await gonderiSil(String(g.id || ''));
+      return cevap(res, 200, { tamam: true });
     }
 
     if (g.islem === 'sil') {

@@ -377,16 +377,19 @@ button.upload{background:none;width:100%;font:inherit}
 .kamera video.ayna{transform:scaleX(-1)}
 
 /* Snake game */
-.yilan-kutu{position:relative;width:100%;max-width:380px;margin:0 auto;aspect-ratio:1;border-radius:20px;overflow:hidden;border:3px solid var(--leaf-d);box-shadow:0 4px 0 var(--leaf-d)}
+.yilan-kutu{position:relative;width:100%;max-width:min(320px,46dvh);margin:0 auto;aspect-ratio:1;border-radius:20px;overflow:hidden;border:3px solid var(--leaf-d);box-shadow:0 4px 0 var(--leaf-d)}
 .yilan-kutu canvas{width:100%;height:100%;display:block;touch-action:none}
 .yilan-ust{position:absolute;inset:0;display:grid;place-items:center;background:rgba(12,40,22,.35)}
 .yilan-son{background:var(--surface);border-radius:20px;padding:18px 22px;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;box-shadow:0 4px 0 var(--line)}
 .yilan-son b{font-family:var(--display);font-size:24px}
 .yilan-son span{color:var(--muted);font-weight:700}
-.yilan-bilgi{display:flex;justify-content:space-between;max-width:380px;margin:0 auto;width:100%;font-variant-numeric:tabular-nums}
+.yilan-bilgi{display:flex;justify-content:space-between;max-width:min(320px,46dvh);margin:0 auto;width:100%;font-variant-numeric:tabular-nums}
 .yilan-bilgi b{font-family:var(--display);font-size:22px}
 .yon-tus{display:grid;grid-template-columns:repeat(3,64px);gap:8px;justify-content:center}
 .yon-tus .btn{padding:12px 0;font-size:18px}
+/* Klavye ve fareyle oynanan cihazlarda ekran tuşları gizlenir, oyun penceresi daralır. */
+@media (hover:hover) and (pointer:fine){.yon-tus{display:none}}
+.sheet.oyun{max-width:440px}
 
 /* Admin */
 .yon-giris{position:fixed;right:14px;bottom:calc(12px + env(safe-area-inset-bottom,0px));border:0;background:none;color:var(--muted);font-size:13px;font-weight:700;opacity:.7;text-decoration:underline;cursor:pointer;padding:6px}
@@ -454,6 +457,23 @@ button.upload{background:none;width:100%;font:inherit}
 </section>
 
 <section class="yonetim" id="yonetim" hidden></section>
+
+<section class="auth" id="okulAdim" hidden>
+  <div class="auth-card">
+    <div class="auth-mascot" id="okulMascot"></div>
+    <h1 style="text-align:center;font-size:34px">Hangi okulda okuyorsun?</h1>
+    <p class="auth-lede">Okulun, okullar arası haftalık yarışta puanlarının toplanacağı yer. Sonradan Ayarlar'dan değiştirebilirsin.</p>
+    <form class="auth-form" id="okulForm" novalidate>
+      <label for="okulAd">Okulunun adı</label>
+      <input type="text" id="okulAd" list="okulListe" maxlength="60" autocomplete="off" placeholder="Örn: Cumhuriyet Ortaokulu">
+      <datalist id="okulListe"></datalist>
+      <p class="auth-err" id="okulHata" role="alert"></p>
+      <button class="btn big" id="okulDugme">Devam</button>
+      <button type="button" class="btn sec big" data-act="okulvazgec" id="okulVazgec" hidden>Vazgeç</button>
+      <p class="auth-hint">Yazmaya başlayınca daha önce eklenen okullar çıkar. Okulun listede yoksa tam adını yaz; aynı adda başka okul varsa ilçeyi de ekle.</p>
+    </form>
+  </div>
+</section>
 
 <div class="shell" id="shell" hidden>
   <aside class="side">
@@ -628,8 +648,8 @@ const BADGES=[
  {id:'ob8',n:'TYMM OB8 Becerisi',r:'5 farklı görev türünü tamamla',ic:'book',ok:s=>Object.keys(s.counts).length>=5,pr:s=>[Math.min(Object.keys(s.counts).length,5),5]},
  {id:'quiz',n:'Quiz Ustası',r:'Bir quizde 5/5 yap',ic:'quiz',ok:s=>s.perfect>=1,pr:s=>[Math.min(s.perfect,1),1]},
  {id:'p500',n:'500 Puan',r:'Toplam 500 puan kazan',ic:'star',ok:s=>s.earned>=500,pr:s=>[Math.min(s.earned,500),500]},
- {id:'sosyal',n:'Sosyal Filiz',r:'Akışta ilk paylaşımını yap',ic:'image',ok:s=>s.posts.length>=1,pr:s=>[Math.min(s.posts.length,1),1]},
- {id:'duo7',n:'Sıkı Dostlar',r:'7 günlük ortak seri',ic:'users',ok:s=>s.duo.best>=7,pr:s=>[Math.min(s.duo.best,7),7]},
+ {id:'sosyal',n:'Sosyal Filiz',r:'Akışta ilk paylaşımını yap',ic:'image',ok:s=>(s.paylasim||0)+s.posts.length>=1,pr:s=>[Math.min((s.paylasim||0)+s.posts.length,1),1]},
+ {id:'duo7',n:'Sıkı Dostlar',r:'Bir arkadaşınla 7 günlük ortak seri',ic:'users',ok:s=>(s.enIyiOrtak||0)>=7,pr:s=>[Math.min(s.enIyiOrtak||0,7),7]},
  {id:'p1000',n:'Bin Yaprak',r:'Toplam 1000 puan kazan',ic:'trophy',ok:s=>s.earned>=1000,pr:s=>[Math.min(s.earned,1000),1000]}
 ];
 const SHOP=[
@@ -685,8 +705,8 @@ const BOT=[
 
 
 /* ---------- durum ve hesap ---------- */
-const BOS=()=>({v:1,offset:0,points:0,earned:0,week:0,weekIdx:null,streak:0,best:0,last:null,done:{},counts:{},total:0,quiz:{},perfect:0,quote:{},duo:{name:'Deniz Y.',streak:0,best:0,last:null},nudged:{},owned:['b_cayir','r_yesil'],eq:{hat:null,neck:null,eyes:null,giysi:null,renk:'r_yesil',bg:'b_cayir'},posts:[],liked:{},notify:'19:00',notifyOn:true,rating:null,seenBadges:[]});
-const ORNEK=()=>({...BOS(),points:260,earned:260,week:180,streak:6,best:6,last:dk(-1),counts:{isik:2,matara:1,bitki:1},total:4,duo:{name:'Deniz Y.',streak:4,best:4,last:dk(-1)},owned:['b_cayir','n_atki'],eq:{hat:null,neck:'n_atki',eyes:null,bg:'b_cayir'}});
+const BOS=()=>({v:1,offset:0,points:0,earned:0,week:0,weekIdx:null,streak:0,best:0,last:null,done:{},counts:{},total:0,quiz:{},perfect:0,quote:{},enIyiOrtak:0,ortakBonus:{},owned:['b_cayir','r_yesil'],eq:{hat:null,neck:null,eyes:null,giysi:null,renk:'r_yesil',bg:'b_cayir'},posts:[],liked:{},notify:'19:00',notifyOn:true,rating:null,seenBadges:[]});
+const ORNEK=()=>({...BOS(),points:260,earned:260,week:180,streak:6,best:6,last:dk(-1),counts:{isik:2,matara:1,bitki:1},total:4,owned:['b_cayir','n_atki'],eq:{hat:null,neck:'n_atki',eyes:null,bg:'b_cayir'}});
 function normalize(s){if(!s||typeof s!=='object'||s.v!==1)return null;const b=BOS();for(const k in b)if(s[k]===undefined||s[k]===null&&b[k]!==null)s[k]=b[k];return s}
 let USER=null,SUNUCU=false,S=BOS();
 const yerelAnahtar=()=>USER?'yesiliz-v1:'+USER.toLocaleLowerCase('tr-TR'):'yesiliz-v1';
@@ -723,12 +743,32 @@ function oturumBasla(j){
  S=normalize(j.durum)||yerel||BOS();
  if(yerel){const resim=new Map(yerel.posts.map(p=>[p.id,p.img]));S.posts.forEach(p=>{if(!p.img&&resim.get(p.id))p.img=resim.get(p.id)})}
  ARK=null;SAMP=null;sampZaman=0;H.veri=null;H.mod=null;H.taslak=null;
- hazirla();yereleYaz();uygulamaGoster();
+ OKUL=j.okul||null;AKIS.liste=null;
+ hazirla();yereleYaz();
+ if(OKUL)uygulamaGoster();else okulAdimGoster();
  magazaFiyatlari();hediyeleriAl();
  arkadaslariGetir(false).then(()=>{if(ARK&&ARK.istekler.length)toast(`${ARK.istekler.length} yeni arkadaşlık isteğin var (Profil → Arkadaşlar)`,'users')});
 }
 function authGoster(){closeSheet();$('#shell').hidden=true;$('#auth').hidden=false;authModu(authMod);setTimeout(()=>$('#aAd').focus(),50)}
-function uygulamaGoster(){$('#auth').hidden=true;$('#shell').hidden=false;renderNav();render()}
+function uygulamaGoster(){$('#auth').hidden=true;$('#okulAdim').hidden=true;$('#shell').hidden=false;renderNav();render()}
+// Okul adımı: kayıttan sonra (ve okulu olmayan eski hesaplarda girişte) ayrı bir ekran olarak açılır.
+let OKUL=null,HOSGELDIN=false;
+async function okulAdimGoster(){
+ $('#auth').hidden=true;$('#shell').hidden=true;$('#okulAdim').hidden=false;scrollTo(0,0);
+ $('#okulMascot').innerHTML=mascot(S.eq,{nobg:'none'});$('#okulVazgec').hidden=!OKUL;$('#okulAd').value=OKUL||'';$('#okulHata').textContent='';
+ setTimeout(()=>$('#okulAd').focus(),60);
+ try{const r=await fetch('api/sosyal?islem=okullar');if(r.ok){const j=await r.json();$('#okulListe').innerHTML=j.okullar.map(o=>`<option value="${esc(o.ad)}">${o.uye} öğrenci</option>`).join('')}}catch(e){}
+}
+async function okulKaydet(){
+ const v=$('#okulAd').value.trim(),h=$('#okulHata');
+ if(v.length<3){h.textContent='Okulunun adını yaz (en az 3 harf).';return}
+ const d=$('#okulDugme');d.disabled=true;
+ const r=await postJSON('api/hesap',{islem:'okul',okul:v});d.disabled=false;
+ if(r.err){h.textContent=r.err;return}
+ OKUL=r.okul;SAMP=null;sampZaman=0;uygulamaGoster();
+ if(HOSGELDIN){HOSGELDIN=false;kutla(`Hoş geldin, ${USER}!`,'Ben Filiz, Seri Dostun. İlk görevini yap, serimiz başlasın.')}
+ else toast(`Okulun: ${OKUL}`,'book');
+}
 function authModu(m){
  authMod=m;const kayit=m==='kayit';
  document.querySelectorAll('[data-act="authmode"]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===m));
@@ -749,7 +789,7 @@ async function authGonder(){
   if(!r.ok){hata.textContent=j.hata||'Bir sorun oldu, tekrar dene.';return}
   $('#aSifre').value='';$('#aTekrar').value='';
   oturumBasla(j);
-  if(kayit)kutla(`Hoş geldin, ${j.kullanici}!`,'Ben Filiz, Seri Dostun. İlk görevini yap, serimiz başlasın.');
+  if(kayit)HOSGELDIN=true;
  }catch(e){hata.textContent='Sunucuya ulaşılamadı. İnternet bağlantını kontrol et.'}
  finally{d.disabled=false}
 }
@@ -774,8 +814,6 @@ function rankOf(st){let r=RANKS[0];for(const x of RANKS)if(st>=x[0])r=x;return r
 function nextRank(st){return RANKS.find(x=>x[0]>st)}
 function curStreak(){if(!S.last)return 0;return idxOf(today())-idxOf(S.last)<=1?S.streak:0}
 const doneToday=()=>S.last===today();
-function duoStreak(){if(!S.duo.last)return 0;return idxOf(today())-idxOf(S.duo.last)<=1?S.duo.streak:0}
-function friendDone(){return !!S.nudged[today()]||rng(hash(today()+'duo'))()<.55}
 function ensureWeek(){const w=weekIdx();if(S.weekIdx!==w){S.weekIdx=w;S.week=0}}
 function nextBonusAt(st){return (Math.floor(st/7)+1)*7}
 const bonusFor=st=>50*2**Math.min(st/7-1,4);
@@ -788,13 +826,8 @@ function recordActivity(){
  toast(`Serin ${S.streak}. güne çıktı`,'flame');
  if(S.streak%7===0){const b=bonusFor(S.streak);addPoints(b,`${S.streak} günlük seri bonusu`);kutla(`${S.streak} günlük seri!`,`Kesintisiz ${S.streak} gün. Seri bonusu olarak +${b} puan kazandın.`)}
  const nr=rankOf(S.streak)[1];if(nr!==prevRank)kutla(`Yeni unvan: ${nr}`,`Serin ${S.streak} güne ulaştı ve yeni unvanını kazandın.`);
- duoCheck();
-}
-function duoCheck(){
- const t=today();if(S.last!==t||!friendDone()||S.duo.last===t)return;
- const g=S.duo.last?idxOf(t)-idxOf(S.duo.last):99;
- S.duo.streak=g===1?S.duo.streak+1:1;S.duo.last=t;S.duo.best=Math.max(S.duo.best,S.duo.streak);
- addPoints(15,'Ortak seri bonusu');toast(`${S.duo.name} ile ortak seri: ${S.duo.streak} gün`,'users');
+ // Sunucu bugünü kaydettikten sonra arkadaşlarla ortak seriler yenilenir (ortak seri bonusu orada verilir).
+ setTimeout(()=>arkadaslariGetir(tab==='me'&&ptab==='ark'),2500);
 }
 function checkBadges(){BADGES.forEach(b=>{if(b.ok(S)&&!S.seenBadges.includes(b.id)){S.seenBadges.push(b.id);kutla(`Rozet: ${b.n}`,b.r+'. Rozetin profiline eklendi.')}})}
 function commit(){checkBadges();save();render()}
@@ -915,7 +948,7 @@ function mascot(eq,o={}){
 // Profil sahnesinin zemini seçili arka plan temasının gökyüzü ve toprak rengini sürdürür.
 const SAHNE={b_cayir:['#d6eef4','#a6d68f',75],b_orman:['#d7e8d2','#7fb36b',77.5],b_deniz:['#cde8f5','#4c97c4',84],b_gece:['#1f2a46','#2d4a3e',77.5]};
 const sahneZemini=bg=>{const [g,t,y]=SAHNE[bg]||SAHNE.b_cayir;return `background:linear-gradient(to bottom,${g} ${y}%,${t} ${y}%)`};
-const mutluMu=()=>(duoStreak()&&S.duo.last===today())||doneToday();
+const mutluMu=()=>doneToday();
 
 /* ---------- arayüz parçaları ---------- */
 function toast(t,icn='spark'){const el=document.createElement('div');el.className='toast';el.innerHTML=ic(icn,20)+esc(t);$('#toasts').appendChild(el);setTimeout(()=>el.remove(),2800)}
@@ -952,7 +985,7 @@ function konfeti(n=140){
 
 /* ---------- ekranlar ---------- */
 function renderHome(){
- const st=curStreak(),rk=rankOf(st),nx=nextRank(st),q=todaysQuote(),qv=S.quote[today()],qz=S.quiz[today()],fd=friendDone(),ds=duoStreak();
+ const st=curStreak(),rk=rankOf(st),nx=nextRank(st),q=todaysQuote(),qv=S.quote[today()],qz=S.quiz[today()];
  const lastI=S.last?idxOf(S.last):-1e9;
  const days=[...Array(7)].map((_,i)=>{const off=i-6,ix=idxOf(dk(off)),on=st>0&&ix<=lastI&&ix>lastI-st;const wd=new Date(Date.now()+(S.offset+off)*DAY).getDay();return `<div><span class="dot ${on?'on':''} ${off===0?'today':''}">${on?ic('check',16):''}</span>${off===0?'Bugün':DAYS[wd]}</div>`}).join('');
  const prog=nx?Math.round((st-rk[0])/(nx[0]-rk[0])*100):100,nb=nextBonusAt(st);
@@ -979,13 +1012,7 @@ function renderHome(){
   <div class="quote"><q>${esc(q.t)}</q><p class="by">${esc(q.a)}</p></div>
   <div class="votes"><button class="vote" data-act="vote" data-v="up" aria-pressed="${qv==='up'}">${ic('up',18)}Beğendim</button><button class="vote" data-act="vote" data-v="down" aria-pressed="${qv==='down'}">${ic('up',18,'style="transform:scaleY(-1)"')}Beğenmedim</button></div>
  </section>
- <section class="panel">
-  <div class="duo">${mascot(S.eq,{mood:mutluMu()?'happy':'sleepy'})}
-   <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px"><p class="label">Ortak seri</p><h3 style="font-size:22px">${esc(S.duo.name)} ile ${ds} gün</h3>
-   <div class="duo-status"><span class="chip ${doneToday()?'ok':'warn'}">Sen ${doneToday()?'✓':'bekliyor'}</span><span class="chip ${fd?'ok':'warn'}">${esc(S.duo.name.split(' ')[0])} ${fd?'✓':'bekliyor'}</span></div></div></div>
-  <p class="small muted" style="font-weight:600">İkiniz de bugün görev yaparsanız ortak seri devam eder ve ikinize de +15 puan. Filiz ikinizin ortak Seri Dostu.</p>
-  ${fd?'':`<button class="btn sec" data-act="nudge">${ic('bell',18)}${esc(S.duo.name.split(' ')[0])}'i dürt</button>`}
- </section>
+ ${ortakSeriPaneli()}
  ${SUNUCU?`<section class="banner deg-serit">${degerlendirmeHTML(false)}<button class="btn sec" data-act="deggit">${S.rating&&S.rating.sent?'Değerlendirmen':'Değerlendir'}</button></section>`:''}`;
 }
 function taskCard(t){const d=isDone(t);return `<button class="task ${d?'done':''}" data-act="task" data-v="${t.id}"><span class="ti ${CHK_CLASS[t.chk]}">${ic(d?'check':t.ic,26)}</span><span class="tt"><b>${t.t}</b><span class="small muted" style="font-weight:700">${d?'Tamamlandı':'Fotoğrafla doğrula'}</span></span><span class="pp">+${t.p}</span></button>`}
@@ -1016,8 +1043,51 @@ function postHTML(p,mine){const liked=!!S.liked[p.id],n=p.likes+(liked?1:0),img=
  return `<article class="panel post"><div class="post-h"><span class="av" style="background:${avColor(p.a)}">${initials(p.a)}</span><div style="min-width:0"><b>${esc(p.a)}</b><p class="small muted">${p.sub&&p.sub!=='Az önce'?esc(p.sub)+' · ':''}<time datetime="${new Date(paylasimZamani(p)).toISOString()}">${gecenZaman(paylasimZamani(p))}</time></p></div></div>
  ${p.x?`<p>${esc(p.x)}</p>`:''}${img?`<img src="${img}" alt="${esc(p.a)} paylaşımının fotoğrafı">`:''}
  <div class="post-f">${mine?`<span class="like">${ic('heart',20)}${n}</span><span class="small muted" style="font-weight:600;flex:1">Her beğeni sana +2 puan</span><button class="like" data-act="delpost" data-v="${p.id}" aria-label="Paylaşımı sil">${ic('trash',18)}Sil</button>`:`<button class="like" data-act="like" data-v="${p.id}" aria-pressed="${liked}">${ic('heart',20)}${n}</button><span class="small muted" style="font-weight:600">${liked?`${esc(p.a.split(' ')[0])} +2 puan kazandı`:'Beğen, paylaşana +2 puan gitsin'}</span>`}</div></article>`}
+// Herkese açık akış (hesap sistemi varken). Paylaşımlar sunucudadır; herkes görür ve beğenebilir.
+const AKIS={liste:null,zaman:0,yukleniyor:false};
+async function akisGetir(zorla){
+ if(!SUNUCU||AKIS.yukleniyor)return;
+ if(!zorla&&AKIS.liste&&Date.now()-AKIS.zaman<20000)return;
+ AKIS.yukleniyor=true;
+ try{const r=await fetch('api/akis');if(r.ok)AKIS.liste=(await r.json()).gonderiler}catch(e){}
+ AKIS.yukleniyor=false;AKIS.zaman=Date.now();
+ if(tab==='feed')render();
+}
+function akisGonderiHTML(p){
+ return `<article class="panel post"><div class="post-h">${avHTML(p.ad,p.benim)}<div style="min-width:0"><b>${esc(p.ad)}</b><p class="small muted">${p.okul?esc(p.okul)+' · ':''}<time datetime="${new Date(p.t).toISOString()}">${gecenZaman(p.t)}</time></p></div></div>
+ ${p.metin?`<p>${esc(p.metin)}</p>`:''}${p.resimVar?`<img src="api/akis?resim=${p.id}" alt="${esc(p.ad)} paylaşımının fotoğrafı" loading="lazy">`:''}
+ <div class="post-f"><button class="like" data-act="abegen" data-v="${p.id}" aria-pressed="${p.begendim}">${ic('heart',20)}${p.begeni}</button>
+ <span class="small muted" style="font-weight:600;flex:1">${p.benim?'Her beğeni sana +2 puan':p.begendim?`${esc(p.ad)} +2 puan kazandı`:'Beğen, paylaşana +2 puan gitsin'}</span>
+ ${p.benim?`<button class="like" data-act="asil" data-v="${p.id}" aria-label="Paylaşımı sil">${ic('trash',18)}<span>Sil</span></button>`:''}</div></article>`;
+}
+async function akisPaylas(btn){
+ const metin=draft.trim();if(!metin&&!draftImg){toast('Paylaşmak için bir yazı ya da fotoğraf ekle','image');return}
+ btn.disabled=true;
+ const r=await postJSON('api/akis',{islem:'paylas',metin,resim:draftImg||''});btn.disabled=false;
+ if(r.err){toast(r.err,'image');return}
+ (AKIS.liste=AKIS.liste||[]).unshift(r.gonderi);draft='';draftImg=null;S.paylasim=(S.paylasim||0)+1;commit();toast('Paylaşıldı, herkes görebilir','send');
+}
+async function akisBegen(id){
+ const r=await postJSON('api/akis',{islem:'begen',id});if(r.err){toast(r.err,'heart');return}
+ const g=(AKIS.liste||[]).find(x=>x.id===id);if(g){g.begeni=r.begeni;g.begendim=r.begendim}render();
+}
+async function akisSil(id,btn){
+ if(!btn.dataset.sure){btn.dataset.sure=1;btn.lastChild.textContent='Emin misin?';return}
+ const r=await postJSON('api/akis',{islem:'sil',id});if(r.err){toast(r.err,'trash');return}
+ AKIS.liste=(AKIS.liste||[]).filter(x=>x.id!==id);render();toast('Paylaşım silindi','trash');
+}
 function renderFeed(){
  const ben=USER||'Sen';
+ if(SUNUCU){
+  akisGetir();
+  return `<section class="panel composer"><h3 style="font-size:22px">Çevre için ne yaptın?</h3>
+  <textarea id="draft" placeholder="Örn: Sınıfta kâğıt geri dönüşüm kutusu kurduk" maxlength="280" aria-label="Paylaşım metni">${esc(draft)}</textarea>
+  ${draftImg?`<img class="preview" src="${draftImg}" alt="Seçilen fotoğraf">`:''}
+  <div class="row"><label class="btn sec" style="position:relative">${ic('camera',20)}${draftImg?'Fotoğrafı değiştir':'Fotoğraf ekle'}<input type="file" id="postImg" accept="image/*" style="position:absolute;opacity:0;width:1px;height:1px"></label>
+  <button class="btn" data-act="post">${ic('send',20)}Paylaş</button></div>
+  <p class="small muted" style="font-weight:600">Paylaşımın kullanıcı adınla birlikte herkese görünür. Kendinin ya da arkadaşlarının yüzünün göründüğü fotoğrafları paylaşmamaya dikkat et.</p></section>
+  ${AKIS.liste===null?'<p class="muted" style="font-weight:700">Akış yükleniyor…</p>':AKIS.liste.length?AKIS.liste.map(akisGonderiHTML).join(''):'<section class="panel"><p class="muted" style="font-weight:600">Henüz paylaşım yok. İlk paylaşımı sen yap!</p></section>'}`;
+ }
  return `<section class="panel composer"><h3 style="font-size:22px">Çevre için ne yaptın?</h3>
   <textarea id="draft" placeholder="Örn: Sınıfta kâğıt geri dönüşüm kutusu kurduk" maxlength="280" aria-label="Paylaşım metni">${esc(draft)}</textarea>
   ${draftImg?`<img class="preview" src="${draftImg}" alt="Seçilen fotoğraf">`:''}
@@ -1064,6 +1134,16 @@ function renderLig(){
   const rows=[...LEAGUE.map(([n,p])=>({n,p})),{n:ben,p:S.week,me:1}].sort((a,b)=>b.p-a.p);const left=kalan;
   let h='';rows.forEach((r,i)=>{if(i<3)return;if(i===3)h+='<p class="zone">Güvenli bölge</p>';if(i===rows.length-3)h+='<p class="zone down">Düşme bölgesi</p>';h+=lbRow(i+1,r.n,r.p,r.me,r.me?rankOf(curStreak())[1]:'')});
   return seg+`<section class="panel"><div class="sec-h" style="margin:0"><h2>Altın Lig</h2><span class="chip warn">${left} gün sonra sıfırlanır</span></div><div class="tiers">${['Bronz','Gümüş','Altın','Zümrüt','Elmas'].map(t=>`<span class="tier ${t==='Altın'?'cur':''}">${t}</span>`).join('')}</div><p class="small muted" style="font-weight:600">İlk 3 Zümrüt Lig'e yükselir, son 3 Gümüş Lig'e düşer. Puanlar her pazartesi sıfırlanır.</p>${podium(rows)}</section><div class="lb">${h}</div>`}
+ if(SUNUCU){
+  sampiyonlariGetir();
+  const o=SAMP&&SAMP.okullar;
+  if(!o)return seg+`<p class="muted" style="font-weight:700">Okullar yükleniyor…</p>`;
+  const benim=kucukAd(o.benim||OKUL||'');
+  return seg+`<section class="panel"><div class="sec-h" style="margin:0"><h2>Okullar yarışı</h2><span class="chip warn">${kalan} gün kaldı</span></div>
+  <p class="small muted" style="font-weight:600">Okuldaki herkesin bu haftaki şampiyonluk puanı okulun skoruna eklenir.${OKUL?` Senin okulun: <b>${esc(OKUL)}</b>.`:''}</p>
+  ${OKUL?'':`<button class="btn sec" data-act="okuldegis">${ic('book',18)}Okulunu seç</button>`}</section>
+  <div class="lb">${o.liste.length?o.liste.map((x,i)=>`<div class="lbr ${kucukAd(x.ad)===benim?'me':''}"><span class="n">${i+1}</span><span class="av" style="background:${avColor(x.ad)}">${ic('book',18)}</span><div style="min-width:0"><b>${esc(x.ad)}</b><p class="small muted">${x.uye} öğrenci puan topladı</p></div><b>${x.s.toLocaleString('tr-TR')}</b></div>`).join(''):'<p class="muted" style="font-weight:600">Bu hafta henüz okul puanı yok. Görev yap, fidan dik, okulun listeye girsin!</p>'}</div>`;
+ }
  const rows=SCHOOLS.map(s=>({n:s[0],p:s[1]+(s[2]?S.earned:0),me:!!s[2]})).sort((a,b)=>b.p-a.p);
  return seg+`<p class="small muted" style="font-weight:600">Okulundaki herkesin puanı okul skoruna eklenir.</p><div class="lb">${rows.map((r,i)=>lbRow(i+1,r.n,r.p,r.me,r.me?'Senin okulun':'')).join('')}</div>`;
 }
@@ -1093,7 +1173,8 @@ function renderMe(){
   body=`<h3 style="font-size:22px">Yeşil Beceriler Rehberi</h3>${GUIDE.map(([h,p],i)=>`<details class="acc" ${i===0?'open':''}><summary>${h}</summary><p>${p}</p></details>`).join('')}`;
  } else {
   const r=S.rating;
-  body=`${SUNUCU?`<section class="panel"><div class="acct">${avHTML(USER,true)}<div style="flex:1;min-width:0"><p class="label">Hesap</p><b>${esc(USER)}</b></div><button class="btn sec" data-act="logout">${ic('out',18)}Çıkış yap</button></div><p class="small muted" style="font-weight:600">İlerlemen hesabına kaydediliyor. Başka bir cihazdan giriş yapınca kaldığın yerden devam edersin.</p>
+  body=`${SUNUCU?`<section class="panel"><div class="acct">${avHTML(USER,true)}<div style="flex:1;min-width:0"><p class="label">Hesap</p><b>${esc(USER)}</b></div><button class="btn sec" data-act="logout">${ic('out',18)}Çıkış yap</button></div>
+   <div class="acct"><span class="ti c-detail" style="width:42px;height:42px;border-radius:12px">${ic('book',22)}</span><div style="flex:1;min-width:0"><p class="label">Okul</p><b>${OKUL?esc(OKUL):'Seçilmedi'}</b></div><button class="btn sec" data-act="okuldegis">Değiştir</button></div><p class="small muted" style="font-weight:600">İlerlemen hesabına kaydediliyor. Başka bir cihazdan giriş yapınca kaldığın yerden devam edersin.</p>
    <details class="acc"><summary>Hesabımı sil</summary><div class="field" style="padding-bottom:16px"><p class="small muted">Hesabın ve bütün ilerlemen kalıcı olarak silinir, geri alınamaz. Onaylamak için şifreni yaz.</p><label for="silSifre">Şifre</label><input type="password" id="silSifre" autocomplete="current-password"><p class="auth-err" id="silHata" role="alert"></p><button class="btn sec" data-act="delacct" style="color:var(--coral)">${ic('trash',18)}Hesabımı kalıcı olarak sil</button></div></details></section>`:''}
   <section class="panel"><h3 style="font-size:22px">Fotoğrafların ve verilerin</h3>
    <p class="small" style="font-weight:600">Görev, fidan ve temizlik fotoğrafların sadece kontrol için yapay zekâya (Google Gemini) gönderilir. Biz onları hiçbir yerde saklamayız. Google bu fotoğrafları kendi kullanım koşullarına göre işler.</p>
@@ -1113,7 +1194,7 @@ function renderMe(){
   ${SUNUCU?'<p style="text-align:right"><button class="yon-giris yerinde" data-act="yonetim">Yönetici</button></p>':''}`;
  }
  return `<section class="stage" style="${sahneZemini(S.eq.bg)}">${mascot(S.eq,{mood:mutluMu()?'happy':'sleepy'})}</section>
- <div class="stage-info"><div style="display:flex;gap:12px;align-items:center;min-width:0">${SUNUCU?`<label class="me-av" title="Profil fotoğrafını değiştir">${avHTML(USER,true)}<span class="cam">${ic('camera',16)}</span><input type="file" id="avatarImg" accept="image/*" aria-label="Profil fotoğrafı yükle"></label>`:''}<div class="nameplate"><p class="label">Seri Dostun Filiz · ${esc(S.duo.name)} ile ortak</p><h2>${esc(ad)}</h2></div></div><span class="chip warn">${ic('trophy',14)}${rankOf(st)[1]}</span></div>
+ <div class="stage-info"><div style="display:flex;gap:12px;align-items:center;min-width:0">${SUNUCU?`<label class="me-av" title="Profil fotoğrafını değiştir">${avHTML(USER,true)}<span class="cam">${ic('camera',16)}</span><input type="file" id="avatarImg" accept="image/*" aria-label="Profil fotoğrafı yükle"></label>`:''}<div class="nameplate"><p class="label">${OKUL?esc(OKUL):"Seri Dostun Filiz"}</p><h2>${esc(ad)}</h2></div></div><span class="chip warn">${ic('trophy',14)}${rankOf(st)[1]}</span></div>
  <div class="stats"><div><b>${S.points}</b><span>Puan</span></div><div><b>${st}</b><span>Seri</span></div><div><b>${S.best}</b><span>En uzun</span></div><div><b>${nb}</b><span>Rozet</span></div></div>${seg}${body}`;
 }
 const NAV=[['home','Ana Sayfa','home'],['tasks','Görevler','tasks'],['harita','Harita','map'],['feed','Akış','image'],['lig','Lig','trophy'],['me','Profil','user']];
@@ -1375,8 +1456,35 @@ function degerlendirmeHTML(tam){
 async function arkadaslariGetir(yenidenCiz){
  if(!SUNUCU)return;
  try{const r=await fetch('api/sosyal?islem=arkadaslar');ARK=r.ok?await r.json():{arkadaslar:[],istekler:[],giden:[]}}catch(e){ARK={arkadaslar:[],istekler:[],giden:[]}}
- if(yenidenCiz&&tab==='me'&&ptab==='ark')render();
+ ortakBonusKontrol();
+ if((yenidenCiz&&tab==='me'&&ptab==='ark')||tab==='home')render();
  if(H.mod)panelYenile();
+}
+// İkiniz de bugün görev yaptıysanız her arkadaş için günde bir kez +15 puan.
+function ortakBonusKontrol(){
+ if(!ARK||!ARK.arkadaslar)return;
+ const g=today();if(!S.ortakBonus||!S.ortakBonus[g])S.ortakBonus={[g]:[]};
+ let degisti=false;
+ for(const a of ARK.arkadaslar){
+  S.enIyiOrtak=Math.max(S.enIyiOrtak||0,a.ortakSeri||0);
+  if(doneToday()&&ARK.benBugun&&a.bugun&&!S.ortakBonus[g].includes(a.ad)){S.ortakBonus[g].push(a.ad);addPoints(15,`${a.ad} ile ortak seri`);degisti=true}
+ }
+ checkBadges();save();if(degisti)$('#pts').textContent=S.points;
+}
+function ortakSeriPaneli(){
+ if(!SUNUCU)return '';
+ const l=ARK?ARK.arkadaslar:[];
+ if(!l.length)return `<section class="panel"><div class="duo">${mascot(S.eq,{mood:mutluMu()?'happy':'sleepy'})}<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px"><p class="label">Ortak seri</p><h3 style="font-size:22px">Arkadaşlarınla seri yap</h3><p class="small muted" style="font-weight:600">Arkadaşını ekle. İkiniz de aynı gün görev yaparsanız ortak seriniz büyür ve ikinize de +15 puan.</p></div></div><button class="btn sec" data-act="arkgit">${ic('userplus',18)}Arkadaş ekle</button></section>`;
+ const sirali=[...l].sort((x,y)=>(y.ortakSeri||0)-(x.ortakSeri||0)).slice(0,5);
+ return `<section class="panel"><div class="sec-h" style="margin:0"><h3 style="font-size:22px">Arkadaşlarınla ortak seri</h3><span class="chip ${doneToday()?'ok':'warn'}">Sen ${doneToday()?'✓':'bekliyor'}</span></div>
+ ${sirali.map(a=>`<div class="ark-satir">${avHTML(a.ad)}<b>${esc(a.ad)}<br><span class="small muted">${a.ortakSeri?`${a.ortakSeri} günlük ortak seri`:'Ortak seri yok'} · ${a.bugun?'bugün yaptı ✓':'bugün henüz yapmadı'}</span></b>${a.bugun?`<span class="chip ok">${ic('flame',14)}${a.ortakSeri||0}</span>`:`<button class="btn sec" data-act="durt" data-v="${esc(a.ad)}">${ic('bell',16)}<span>Dürt</span></button>`}</div>`).join('')}
+ <p class="small muted" style="font-weight:600">İkiniz de aynı gün görev ya da quiz yaparsanız ortak seriniz devam eder ve ikinize de +15 puan.${l.length>5?` Tüm arkadaşların: Profil → Arkadaşlar.`:''}</p></section>`;
+}
+async function durt(ad,btn){
+ btn.disabled=true;
+ const r=await postJSON('api/sosyal',{islem:'durt',ad});
+ if(r.err){toast(r.err,'bell');return}
+ btn.lastChild.textContent='Dürtüldü';toast(`${ad} dürtüldü, uygulamayı açınca görecek`,'bell');
 }
 async function arkIslem(islem,ad){
  const r=await postJSON('api/sosyal',{islem,ad});
@@ -1444,6 +1552,7 @@ function yilanAc(){
  <div class="yilan-bilgi"><b id="ySkor">0 çöp</b><span class="muted" style="font-weight:800">Rekor: <span id="yRekor">${o.rekor}</span></span></div>
  <div class="yon-tus"><span></span><button class="btn sec" data-act="yyon" data-v="u" aria-label="Yukarı">▲</button><span></span><button class="btn sec" data-act="yyon" data-v="l" aria-label="Sola">◀</button><button class="btn sec" data-act="yyon" data-v="d" aria-label="Aşağı">▼</button><button class="btn sec" data-act="yyon" data-v="r" aria-label="Sağa">▶</button></div>
  <p class="small muted">Klavyede ok tuşları ya da W A S D. Telefonda oyun alanında parmağını kaydırabilirsin.</p>`);
+ $('#layer .sheet').classList.add('oyun');
  yilanCiz(null);
  const c=$('#yilan');let sx=0,sy=0;
  c.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
@@ -1494,6 +1603,17 @@ function yilanCiz(d){
 
 /* ---------- hediyeler ve mağaza fiyatları ---------- */
 let hediyeAliniyor=false;
+// Arkadaş dürtmeleri ve paylaşım beğenileri.
+function bildirimleriGoster(l){
+ const begeniler=l.filter(b=>b.tur==='begeni'),durtmeler=l.filter(b=>b.tur==='durt');
+ if(begeniler.length){const p=begeniler.reduce((a,b)=>a+(b.puan||0),0);addPoints(p,`${begeniler.length} beğeni aldın`);save();$('#pts').textContent=S.points}
+ const kimler=[...new Set(durtmeler.map(d=>d.kimden))];
+ if(kimler.length)bildirimBandi(`${kimler.join(', ')} seni dürttü!`,doneToday()?'Bugünkü görevini yaptın, ortak seriniz güvende.':'Bugünkü görevini yap, ortak seriniz devam etsin.');
+}
+function bildirimBandi(baslik,metin){
+ const el=document.createElement('div');el.className='push';el.innerHTML=`<div class="pi">${ic('bell',22)}</div><div><b>${esc(baslik)}</b><p class="small">${esc(metin)}</p></div>`;
+ document.body.appendChild(el);setTimeout(()=>el.remove(),6000);
+}
 async function hediyeleriAl(){
  if(!SUNUCU||!USER||hediyeAliniyor||document.hidden)return;hediyeAliniyor=true;
  try{
@@ -1502,11 +1622,13 @@ async function hediyeleriAl(){
    const top=j.hediyeler.reduce((a,h)=>a+h.miktar,0);S.points+=top;save();render();
    const not=j.hediyeler.map(h=>h.not).filter(Boolean).join(' · ');
    kutla(`Hediye geldi! +${top.toLocaleString('tr-TR')} puan`,not||'Yeşiliz ekibinden sana bir hediye. Puanlarını mağazada harcayabilirsin.');
-  }}
+  }
+  bildirimleriGoster(j.bildirimler||[]);
+  }
  }catch(e){}
  hediyeAliniyor=false;
 }
-setInterval(hediyeleriAl,90000);
+setInterval(hediyeleriAl,60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)hediyeleriAl()});
 async function magazaFiyatlari(){
  if(!SUNUCU)return;
@@ -1542,7 +1664,7 @@ function yonetimKapat(){$('#yonetim').hidden=true;if(USER||!SUNUCU){$('#shell').
 async function yonetimCikis(){await postJSON('api/yonetim',{islem:'cikis'});YON={sekme:'kul',kul:null,icerik:null,ara:'',acik:null};yonetimKapat()}
 function yonetimCiz(){
  const y=$('#yonetim');if(y.hidden)return;
- const sekmeler=[['kul','Kullanıcılar'],['mag','Mağaza'],['har','Harita'],['deg','Değerlendirmeler']];
+ const sekmeler=[['kul','Kullanıcılar'],['mag','Mağaza'],['har','Harita'],['akis','Akış'],['deg','Değerlendirmeler']];
  let g='';
  if(!YON.kul)g='<p class="muted" style="font-weight:700">Yükleniyor…</p>';
  else if(YON.sekme==='kul'){
@@ -1559,6 +1681,9 @@ function yonetimCiz(){
   const fs=YON.icerik.fidanlar,as=YON.icerik.alanlar;
   g=`<h3 style="font-size:20px">Fidanlar (${fs.length})</h3><div class="yon-liste">${fs.map(f=>`<div class="ark-satir"><b>${esc(f.tur)} · ${ekipYazi(f)}<br><span class="small muted">${tarihYaz(f.t)} · ${f.sulama} sulama · ${f.lat.toFixed(4)}, ${f.lng.toFixed(4)}</span></b><button class="btn sec" data-act="yonsil" data-v="fidan:${f.id}">${ic('trash',16)}<span>Sil</span></button></div>`).join('')||'<p class="muted">Henüz fidan yok.</p>'}</div>
   <h3 style="font-size:20px">Temizlenen alanlar (${as.length})</h3><div class="yon-liste">${as.map(a=>`<div class="ark-satir"><b>${esc(a.isim||'Adsız alan')} · ${a.m2.toLocaleString('tr-TR')} m²<br><span class="small muted">${ekipYazi(a)} · ${tarihYaz(a.t)}</span></b><button class="btn sec" data-act="yonsil" data-v="alan:${a.id}">${ic('trash',16)}<span>Sil</span></button></div>`).join('')||'<p class="muted">Henüz alan yok.</p>'}</div>`;
+ }else if(YON.sekme==='akis'){
+  const gs=YON.icerik.gonderiler||[];
+  g=`<h3 style="font-size:20px">Paylaşımlar (${gs.length})</h3><div class="yon-liste">${gs.map(p=>`<div class="panel"><div class="acct">${avHTML(p.ad)}<b style="flex:1;min-width:0">${esc(p.ad)}<br><span class="small muted">${p.okul?esc(p.okul)+' · ':''}${tarihYaz(p.t)}</span></b><button class="btn sec" data-act="yonsil" data-v="gonderi:${p.id}">${ic('trash',16)}<span>Sil</span></button></div>${p.metin?`<p>${esc(p.metin)}</p>`:''}${p.resimVar?`<img src="api/akis?resim=${p.id}" alt="" loading="lazy" style="width:100%;max-width:320px;border-radius:14px">`:''}</div>`).join('')||'<p class="muted">Henüz paylaşım yok.</p>'}</div>`;
  }else{
   const ds=YON.icerik.degerlendirmeler,ort=ds.length?ds.reduce((a,d)=>a+d.yildiz,0)/ds.length:0;
   g=`<p style="font-weight:800">${ds.length} değerlendirme · ortalama ${ort.toLocaleString('tr-TR',{maximumFractionDigits:1})}</p><div class="yon-liste">${ds.map(d=>`<div class="panel"><div class="acct"><b style="flex:1">${esc(d.ad||'?')}</b>${yildizSirasi(d.yildiz,16)}</div>${d.metin?`<p>${esc(d.metin)}</p>`:'<p class="small muted">Yorum yazılmamış.</p>'}<p class="small muted">${tarihYaz(d.t)}</p></div>`).join('')||'<p class="muted">Henüz değerlendirme yok.</p>'}</div>`;
@@ -1586,7 +1711,7 @@ async function yonetimSil(v,btn){
  const [tip,id]=v.split(':');btn.disabled=true;
  const r=await postJSON('api/yonetim',{islem:'sil',tip,id});
  if(r.err){toast(r.err,'x');btn.disabled=false;return}
- const l=tip==='alan'?'alanlar':'fidanlar';YON.icerik[l]=YON.icerik[l].filter(x=>x.id!==id);H.son=0;toast('Silindi','trash');yonetimCiz();
+ const l=tip==='alan'?'alanlar':tip==='gonderi'?'gonderiler':'fidanlar';YON.icerik[l]=(YON.icerik[l]||[]).filter(x=>x.id!==id);H.son=0;AKIS.zaman=0;toast('Silindi','trash');yonetimCiz();
 }
 
 /* ---------- akışlar ---------- */
@@ -1710,9 +1835,15 @@ function tiklama(e){
  if(a==='quiz'){openQuiz();return}
  if(a==='qpick'){if(QZ.picked!==null)return;QZ.picked=+v;QZ.ans.push(+v);drawQuiz();return}
  if(a==='qnext'){if(QZ.i<4){QZ.i++;QZ.picked=null;drawQuiz()}else finishQuiz();return}
- if(a==='nudge'){const nm=S.duo.name.split(' ')[0];toast(`${nm}'e hatırlatma gönderildi`,'bell');el.disabled=true;setTimeout(()=>{S.nudged[today()]=1;toast(`${nm} bugünkü görevini yaptı!`,'users');duoCheck();commit()},1600);return}
+ if(a==='durt'){durt(v,el);return}
+ if(a==='okuldegis'){okulAdimGoster();return}
+ if(a==='okulvazgec'){uygulamaGoster();return}
+ if(a==='arkgit'){tab='me';ptab='ark';render();scrollTo(0,0);return}
  if(a==='task'){openTask(v);return}
  if(a==='like'){const p=SEEDPOSTS.find(x=>x.id===v);S.liked[v]=!S.liked[v];if(S.liked[v])toast(`${p.a.split(' ')[0]} +2 puan kazandı`,'heart');commit();return}
+ if(a==='abegen'){akisBegen(v);return}
+ if(a==='asil'){akisSil(v,el);return}
+ if(a==='post'&&SUNUCU){akisPaylas(el);return}
  if(a==='post'){const txt=draft.trim();if(!txt&&!draftImg){toast('Paylaşmak için bir yazı ya da fotoğraf ekle','image');return}
   const p={id:'u'+Date.now(),a:USER||'Sen',sub:'',t:simdi(),x:txt,img:draftImg,likes:0};S.posts.unshift(p);S.posts=S.posts.slice(0,8);draft='';draftImg=null;commit();toast('Paylaşıldı','send');
   ['Ayşe K.','Mert D.','Defne Ö.'].forEach((n,i)=>setTimeout(()=>{const q=S.posts.find(x=>x.id===p.id);if(!q)return;q.likes++;addPoints(2,`${n} paylaşımını beğendi`);commit()},2200+i*1700));return}
@@ -1735,6 +1866,7 @@ function tiklama(e){
 document.addEventListener('click',tiklama);
 document.addEventListener('submit',e=>{
  if(e.target.id==='chatform'){e.preventDefault();ask($('#chatq').value)}
+ if(e.target.id==='okulForm'){e.preventDefault();okulKaydet();return}
  if(e.target.id==='yonForm'){e.preventDefault();yonetimGiris();return}
  if(e.target.id==='yonFiyat'){e.preventDefault();yonetimFiyat(e.target);return}
  if(e.target.classList.contains('yon-hediye')){e.preventDefault();yonetimHediye(e.target);return}
@@ -1748,7 +1880,7 @@ document.addEventListener('change',async e=>{
  if(t.id==='hImg'&&t.files[0]){try{haritaDogrula(t.dataset.tur,await downscale(t.files[0],900))}catch(_){$('#anl').innerHTML='<div class="verdict no">Bu dosya açılamadı. JPG veya PNG bir fotoğraf dene.</div>'}return}
  if(t.id==='avatarImg'&&t.files[0]){avatarYukle(t.files[0]);return}
  if(t.id==='taskImg'&&t.files[0]){const task=TASKS.find(x=>x.id===t.dataset.task);try{verify(task,await downscale(t.files[0],900))}catch(_){$('#anl').innerHTML='<div class="verdict no">Bu dosya açılamadı. JPG veya PNG bir fotoğraf dene.</div>'}}
- if(t.id==='postImg'&&t.files[0]){try{draftImg=await downscale(t.files[0],640);render()}catch(_){toast('Fotoğraf açılamadı','image')}}
+ if(t.id==='postImg'&&t.files[0]){try{draftImg=await downscale(t.files[0],SUNUCU?480:640);render()}catch(_){toast('Fotoğraf açılamadı','image')}}
  if(t.id==='ntime'){S.notify=t.value||'19:00';save();toast(`Hatırlatma her gün ${S.notify}`,'bell')}
  if(t.id==='non'){S.notifyOn=t.checked;save();toast(t.checked?'Hatırlatmalar açık':'Hatırlatmalar kapalı','bell')}
 });

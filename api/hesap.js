@@ -2,9 +2,10 @@
 //   GET  /api/hesap                      → { kullanici, durum } ya da 401
 //   POST /api/hesap { islem: 'kayit' | 'giris', ad, sifre }
 //   POST /api/hesap { islem: 'cikis' }
+//   POST /api/hesap { islem: 'okul', okul } → okul adını kaydeder
 //   PUT  /api/hesap { durum }            → ilerlemeyi kaydeder
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import { dbVar, redis, cerezOku, gecerliJeton, oturumKullanici, oturumDegeri, sifreOzeti, haftaNo } from './_db.js';
+import { dbVar, redis, cerezOku, gecerliJeton, oturumKullanici, oturumDegeri, sifreOzeti, haftaNo, gunNo } from './_db.js';
 
 // Oturum 180 gün sürer ve site her açıldığında yenilenir; düzenli kullanan bir daha şifre girmez.
 const OTURUM_SURESI = 60 * 60 * 24 * 180;
@@ -42,6 +43,11 @@ async function oturumAc(res, anahtar, olusturma) {
   cerezYaz(res, jeton, OTURUM_SURESI);
 }
 
+const okulAnahtari = o => o.toLocaleLowerCase('tr-TR');
+const okulTemizle = o => String(o || '').replace(/[\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+// Gün numarasını istemcinin kullandığı "yyyy-aa-gg" biçimine çevirir.
+const gunMetni = n => new Date(n * 86400_000).toISOString().slice(0, 10);
+
 async function kullaniciAl(anahtar) {
   const ham = await redis('GET', 'kullanici:' + anahtar);
   try { return ham ? JSON.parse(ham) : null; } catch { return null; }
@@ -63,7 +69,7 @@ export default async function handler(req, res) {
       const jeton = cerezOku(req, 'oturum');
       await redis('EXPIRE', 'oturum:' + jeton, OTURUM_SURESI);
       cerezYaz(res, jeton, OTURUM_SURESI);
-      return cevap(res, 200, { kullanici: k.ad, durum: await durumAl(anahtar) });
+      return cevap(res, 200, { kullanici: k.ad, okul: k.okul || null, durum: await durumAl(anahtar) });
     }
 
     if (req.method === 'PUT') {
@@ -74,6 +80,12 @@ export default async function handler(req, res) {
       const metin = JSON.stringify(g.durum);
       if (metin.length > EN_BUYUK_DURUM) return cevap(res, 413, { hata: 'Kayıt çok büyük' });
       await redis('SET', 'durum:' + anahtar, metin);
+      // Ortak seriler için kullanıcının aktif olduğu günler tutulur (son 120 gün).
+      const bugun = gunNo();
+      if (!g.durum.offset && g.durum.last === gunMetni(bugun)) {
+        await redis('ZADD', 'aktif:' + anahtar, bugun, bugun);
+        await redis('ZREMRANGEBYSCORE', 'aktif:' + anahtar, 0, bugun - 120);
+      }
       // Haftalık puan şampiyonluk sıralamasına yazılır (sunum modunda gün kaydırılmışsa yazılmaz).
       const d = g.durum;
       if (!d.offset && Number(d.weekIdx) === haftaNo() && Number.isFinite(Number(d.week))) {
@@ -87,6 +99,22 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return cevap(res, 405, { hata: 'Desteklenmeyen istek' });
     const g = govdeAl(req);
     if (!g) return cevap(res, 400, { hata: 'Geçersiz istek' });
+
+    if (g.islem === 'okul') {
+      const anahtar = await oturumKullanici(req);
+      const k = anahtar && await kullaniciAl(anahtar);
+      if (!k) return cevap(res, 401, { hata: 'Oturumun kapanmış, tekrar giriş yap' });
+      const okul = okulTemizle(g.okul);
+      if (okul.length < 3) return cevap(res, 400, { hata: 'Okulunun adını yaz (en az 3 harf).' });
+      const yeni = okulAnahtari(okul);
+      if (k.okul && okulAnahtari(k.okul) !== yeni) await redis('HINCRBY', 'okul:uye', okulAnahtari(k.okul), -1);
+      if (!k.okul || okulAnahtari(k.okul) !== yeni) await redis('HINCRBY', 'okul:uye', yeni, 1);
+      // Okulun görünen adı ilk yazana göre sabitlenir; aynı okulu farklı yazan herkes tek yerde toplanır.
+      await redis('HSETNX', 'okul:ad', yeni, okul);
+      k.okul = await redis('HGET', 'okul:ad', yeni) || okul;
+      await redis('SET', 'kullanici:' + anahtar, JSON.stringify(k));
+      return cevap(res, 200, { okul: k.okul });
+    }
 
     if (g.islem === 'cikis') {
       const jeton = cerezOku(req, 'oturum');
@@ -111,12 +139,16 @@ export default async function handler(req, res) {
       for (const o of await redis('SMEMBERS', 'giden:' + anahtar)) await redis('SREM', 'istekler:' + o, anahtar);
       for (const o of await redis('SMEMBERS', 'istekler:' + anahtar)) await redis('SREM', 'giden:' + o, anahtar);
       await redis('HDEL', 'degerlendirmeler', anahtar);
+      if (k.okul) await redis('HINCRBY', 'okul:uye', okulAnahtari(k.okul), -1);
+      for (const id of await redis('SMEMBERS', 'akis:benim:' + anahtar)) {
+        await redis('HDEL', 'akis:gonderi', id); await redis('HDEL', 'akis:resim', id); await redis('ZREM', 'akis:zaman', id); await redis('DEL', 'begeni:' + id);
+      }
       const h = haftaNo();
       for (const t of ['fidan', 'alan', 'sulama', 'puan']) await redis('ZREM', `h:${h}:${t}`, anahtar);
       // Diğer cihazlardaki oturumlar, kullanıcı kaydı silindiği için geçersiz olur (bkz. oturumDegeri).
       await redis('DEL', 'kullanici:' + anahtar, 'durum:' + anahtar, 'oturum:' + cerezOku(req, 'oturum'),
         'benim:' + anahtar, 'arkadas:' + anahtar, 'giden:' + anahtar, 'istekler:' + anahtar, 'avatar:' + anahtar,
-        'hediye:' + anahtar);
+        'hediye:' + anahtar, 'bildirim:' + anahtar, 'aktif:' + anahtar, 'akis:benim:' + anahtar);
       cerezYaz(res, '', 0);
       return cevap(res, 200, { tamam: true });
     }
@@ -154,7 +186,7 @@ export default async function handler(req, res) {
       return cevap(res, 401, { hata: 'Kullanıcı adı veya şifre yanlış.' });
     }
     await oturumAc(res, anahtar, k.olusturma);
-    return cevap(res, 200, { kullanici: k.ad, durum: await durumAl(anahtar) });
+    return cevap(res, 200, { kullanici: k.ad, okul: k.okul || null, durum: await durumAl(anahtar) });
   } catch (e) {
     console.error('hesap', e);
     return cevap(res, 500, { hata: 'Sunucuda bir sorun oldu, biraz sonra tekrar dene.' });
