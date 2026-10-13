@@ -115,7 +115,8 @@ export default async function handler(req, res) {
       for (const t of ['fidan', 'alan', 'sulama', 'puan']) await redis('ZREM', `h:${h}:${t}`, anahtar);
       // Diğer cihazlardaki oturumlar, kullanıcı kaydı silindiği için geçersiz olur (bkz. oturumDegeri).
       await redis('DEL', 'kullanici:' + anahtar, 'durum:' + anahtar, 'oturum:' + cerezOku(req, 'oturum'),
-        'benim:' + anahtar, 'arkadas:' + anahtar, 'giden:' + anahtar, 'istekler:' + anahtar, 'avatar:' + anahtar);
+        'benim:' + anahtar, 'arkadas:' + anahtar, 'giden:' + anahtar, 'istekler:' + anahtar, 'avatar:' + anahtar,
+        'hediye:' + anahtar);
       cerezYaz(res, '', 0);
       return cevap(res, 200, { tamam: true });
     }

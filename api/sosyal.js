@@ -3,6 +3,8 @@
 //   GET  /api/sosyal?islem=sampiyonlar              → bu haftanın ve geçen haftanın sıralamaları
 //   GET  /api/sosyal?islem=arkadaslar               → { arkadaslar, istekler, giden }
 //   GET  /api/sosyal?islem=degerlendirmeler         → { sayi, ortalama, dagilim[1..5 yıldız] }
+//   GET  /api/sosyal?islem=magaza                   → { fiyat: { ürünKimliği: puan } }
+//   GET  /api/sosyal?islem=hediyeler                → { hediyeler: [{ miktar, not, t }] } (teslim edilince silinir)
 //   POST /api/sosyal { islem: 'degerlendir', yildiz, metin }
 //   POST /api/sosyal { islem: 'istek' | 'kabul' | 'reddet' | 'cikar', ad }
 //   POST /api/sosyal { islem: 'avatar', resim } | { islem: 'avatarSil' }
@@ -71,11 +73,25 @@ export default async function handler(req, res) {
         return res.status(200).end(Buffer.from(m[1], 'base64'));
       }
       if (q.islem === 'degerlendirmeler') return cevap(res, 200, await degerlendirmeOzeti());
+      // Yöneticinin değiştirdiği mağaza fiyatları (yalnızca değişenler döner).
+      if (q.islem === 'magaza') {
+        const fiyat = {};
+        for (const [id, p] of ciftler(await redis('HGETALL', 'magaza:fiyat'))) fiyat[id] = Number(p);
+        return cevap(res, 200, { fiyat });
+      }
       const ben = await oturumBilgi(req);
       if (q.islem === 'sampiyonlar') {
         const h = haftaNo();
         const [bu, gecen] = await Promise.all([siralama(h, ben), siralama(h - 1, null)]);
         return cevap(res, 200, { hafta: bu, gecen: gecen.fuzyon.slice(0, 3), agirlik: AGIRLIK });
+      }
+      // Yöneticinin gönderdiği bekleyen hediyeler: bir kez teslim edilir, sonra silinir.
+      if (q.islem === 'hediyeler') {
+        if (!ben) return cevap(res, 401, { hata: 'Önce giriş yap' });
+        const k = 'hediye:' + ben.anahtar;
+        const liste = (await redis('LRANGE', k, 0, -1) || []).map(jsonOku).filter(h => h && h.miktar > 0);
+        if (liste.length) await redis('DEL', k);
+        return cevap(res, 200, { hediyeler: liste });
       }
       if (q.islem === 'arkadaslar') {
         if (!ben) return cevap(res, 401, { hata: 'Önce giriş yap' });

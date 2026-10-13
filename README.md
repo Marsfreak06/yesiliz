@@ -11,6 +11,9 @@
 - Haftalık şampiyonlar: fidan, temizlenen m², sulama ve puan
 - Günlük quiz, günün sözü, sosyal akış, Yaprak chatbotu
 - Kullanıcı adı ve şifreyle hesap, profil fotoğrafı
+- Doğrulama fotoğrafları yalnızca uygulama içi kamerayla çekilir
+- Çöp Yılanı mini oyunu (günde en fazla 30 puan)
+- Filiz için şapka, gözlük, aksesuar, kıyafet ve renk seçenekleri
 
 ## Yayınlama (Vercel)
 
@@ -43,6 +46,10 @@ Veritabanı bağlı değilse site hesapsız çalışır, ilerleme yalnızca o ci
 ### Şampiyonluk puanı
 
 `fidan × 100 + temizlenen m² ÷ 10 + sulama × 25 + haftalık puan ÷ 10`, haftalar pazartesi (Türkiye saati) başlar.
+
+## Yönetici paneli
+
+Vercel'de `ADMIN_SIFRE` ortam değişkenini ekle (Production) ve yeniden yayınla. Giriş ekranının sağ altındaki ve Ayarlar'ın en altındaki "Yönetici" bağlantısından şifreyle girilir. Panelde: kullanıcı listesi ve hediye puan gönderme, mağaza fiyatlarını değiştirme, haritadaki fidan ve alanları silme, değerlendirme yorumlarını okuma. Yönetici oturumu 8 saat sürer; aynı IP'den 15 dakikada en fazla 5 giriş denemesi yapılabilir.
 
 ## Harita
 
