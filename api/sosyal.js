@@ -49,12 +49,13 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const q = req.query || {};
+      // Fotoğraf yalnızca tarayıcıda kısa süre önbelleğe alınır; Vercel önbelleği tutmaz ki silinen fotoğraf hemen kaybolsun.
       if (q.avatar) {
         const veri = await redis('GET', 'avatar:' + kullaniciAnahtari(q.avatar));
         const m = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(veri || '');
-        if (!m) { res.setHeader('Cache-Control', 'public, max-age=300'); return res.status(404).end(); }
+        if (!m) { res.setHeader('Cache-Control', 'private, max-age=60'); return res.status(404).end(); }
         res.setHeader('Content-Type', 'image/jpeg');
-        res.setHeader('Cache-Control', 'public, max-age=300');
+        res.setHeader('Cache-Control', 'private, max-age=60');
         return res.status(200).end(Buffer.from(m[1], 'base64'));
       }
       const ben = await oturumBilgi(req);
