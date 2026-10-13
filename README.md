@@ -46,7 +46,7 @@ Veritabanı bağlı değilse site hesapsız çalışır, ilerleme yalnızca o ci
 
 ## Harita
 
-Leaflet 1.9 ve CARTO altlıkları (© OpenStreetMap katkıcıları © CARTO) kullanılır.
+Leaflet 1.9 ve OpenStreetMap karoları (© OpenStreetMap katkıcıları) kullanılır; anahtar gerekmez.
 
 ## Sunum modu
 

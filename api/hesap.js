@@ -110,6 +110,7 @@ export default async function handler(req, res) {
       for (const o of await redis('SMEMBERS', 'arkadas:' + anahtar)) await redis('SREM', 'arkadas:' + o, anahtar);
       for (const o of await redis('SMEMBERS', 'giden:' + anahtar)) await redis('SREM', 'istekler:' + o, anahtar);
       for (const o of await redis('SMEMBERS', 'istekler:' + anahtar)) await redis('SREM', 'giden:' + o, anahtar);
+      await redis('HDEL', 'degerlendirmeler', anahtar);
       const h = haftaNo();
       for (const t of ['fidan', 'alan', 'sulama', 'puan']) await redis('ZREM', `h:${h}:${t}`, anahtar);
       // Diğer cihazlardaki oturumlar, kullanıcı kaydı silindiği için geçersiz olur (bkz. oturumDegeri).

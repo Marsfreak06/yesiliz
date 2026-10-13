@@ -275,6 +275,17 @@ input:focus,textarea:focus{outline:none;border-color:var(--leaf)}
 .stars button.on{color:var(--sun)}
 .stars button.on svg{fill:currentColor}
 .acct{display:flex;align-items:center;gap:12px}
+.deg-ozet{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.deg-ort{font-family:var(--display);font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
+.yildizlar{position:relative;display:inline-block;line-height:0;color:var(--sun);height:var(--boy)}
+.yildizlar .bos{color:var(--line);display:inline-flex}
+.yildizlar .dolu{position:absolute;left:0;top:0;overflow:hidden;white-space:nowrap;display:inline-flex}
+.yildizlar svg{flex:none;fill:currentColor}
+.deg-dagilim{display:grid;grid-template-columns:auto 1fr auto;gap:5px 10px;align-items:center;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--muted)}
+.deg-dagilim span:first-child,.deg-dagilim>span:nth-child(3n+1){display:inline-flex;align-items:center;gap:3px}
+.deg-dagilim svg{color:var(--sun);fill:currentColor}
+.deg-dagilim .bar{height:9px}
+.deg-serit .deg-ort{font-size:30px}
 
 /* Chat */
 .chat{display:flex;flex-direction:column;gap:8px;max-height:48dvh;overflow-y:auto;padding:4px 0}
@@ -308,6 +319,8 @@ input:focus,textarea:focus{outline:none;border-color:var(--leaf)}
 .harita-ust{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .harita{height:min(64vh,560px);min-height:340px;border-radius:24px;border:2px solid var(--line);box-shadow:0 4px 0 var(--line);overflow:hidden;position:relative;background:var(--soft);z-index:0}
 .harita .leaflet-container{font-family:var(--body);background:var(--soft)}
+.harita .leaflet-tile-pane{filter:saturate(.8) sepia(.08) brightness(1.03)}
+.harita.koyu .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.6)}
 .harita-not{pointer-events:none;position:absolute;left:58px;right:12px;top:12px;z-index:500;background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:10px 14px;font-weight:800;display:flex;gap:10px;align-items:center;box-shadow:0 4px 0 var(--line)}
 .harita-yukleniyor{display:grid;place-items:center;height:100%;color:var(--muted);font-weight:800}
 .fd-ikon{width:38px;height:38px;border-radius:50% 50% 50% 6px;transform:rotate(-45deg);display:grid;place-items:center;background:var(--leaf);border:3px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.25)}
@@ -892,7 +905,8 @@ function renderHome(){
    <div class="duo-status"><span class="chip ${doneToday()?'ok':'warn'}">Sen ${doneToday()?'✓':'bekliyor'}</span><span class="chip ${fd?'ok':'warn'}">${esc(S.duo.name.split(' ')[0])} ${fd?'✓':'bekliyor'}</span></div></div></div>
   <p class="small muted" style="font-weight:600">İkiniz de bugün görev yaparsanız ortak seri devam eder ve ikinize de +15 puan. Filiz ikinizin ortak Seri Dostu.</p>
   ${fd?'':`<button class="btn sec" data-act="nudge">${ic('bell',18)}${esc(S.duo.name.split(' ')[0])}'i dürt</button>`}
- </section>`;
+ </section>
+ ${SUNUCU?`<section class="banner deg-serit">${degerlendirmeHTML(false)}<button class="btn sec" data-act="deggit">${S.rating&&S.rating.sent?'Değerlendirmen':'Değerlendir'}</button></section>`:''}`;
 }
 function taskCard(t){const d=isDone(t);return `<button class="task ${d?'done':''}" data-act="task" data-v="${t.id}"><span class="ti ${CHK_CLASS[t.chk]}">${ic(d?'check':t.ic,26)}</span><span class="tt"><b>${t.t}</b><span class="small muted" style="font-weight:700">${d?'Tamamlandı':'Fotoğrafla doğrula'}</span></span><span class="pp">+${t.p}</span></button>`}
 function renderTasks(){
@@ -1009,7 +1023,8 @@ function renderMe(){
    <div class="field"><label for="ntime">Bildirim saati</label><input type="time" id="ntime" value="${S.notify}"></div>
    <label class="small" style="display:flex;gap:8px;align-items:center;font-weight:700"><input type="checkbox" id="non" ${S.notifyOn?'checked':''}> Serimi kaybetmemem için her gün hatırlat</label>
    <button class="btn sec" data-act="push">${ic('bell',18)}Bildirimi önizle</button></section>
-  <section class="panel"><h3 style="font-size:22px">Uygulamayı değerlendir</h3>
+  <section class="panel" id="degPanel"><h3 style="font-size:22px">Uygulamayı değerlendir</h3>
+   ${degerlendirmeHTML(true)}
    ${r&&r.sent?`<p>Teşekkürler! Puanın: <b>${r.stars}/5</b></p>${r.text?`<p class="small muted">“${esc(r.text)}”</p>`:''}<button class="btn sec" data-act="rerate">Düzenle</button>`
    :`<div class="stars" role="group" aria-label="Yıldız puanı">${[1,2,3,4,5].map(n=>`<button class="${(r&&r.stars>=n)?'on':''}" data-act="star" data-v="${n}" aria-label="${n} yıldız">${ic('star',34)}</button>`).join('')}</div>
    <div class="field"><label for="rtext">Yorum veya öneri</label><textarea id="rtext" placeholder="Neyi sevdin, neyi değiştirelim?">${esc(r&&r.text||'')}</textarea></div>
@@ -1131,8 +1146,10 @@ async function haritaKur(){
  if(H.harita){H.harita.remove();H.harita=null}
  const m=L.map(kutu,{zoomControl:true}).setView(H.merkez,H.zoom);
  m.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
- L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/${koyuTema()?'dark_all':'voyager'}/{z}/{x}/{y}{r}.png`,{maxZoom:20,subdomains:'abcd',
-  attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> katkıcıları © <a href="https://carto.com/attributions">CARTO</a>'}).addTo(m);
+ // OpenStreetMap karoları anahtar gerektirmez; temaya uyması için renkleri CSS ile yumuşatılır (.harita.koyu).
+ kutu.classList.toggle('koyu',koyuTema());
+ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,
+  attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> katkıcıları'}).addTo(m);
  m.on('moveend',()=>{const c=m.getCenter();H.merkez=[c.lat,c.lng];H.zoom=m.getZoom()});
  m.on('click',e=>haritaTik(e.latlng));
  m.on('popupopen',e=>{H.popupAcik=true;const el=e.popup.getElement();if(el&&!el.dataset.bagli){el.dataset.bagli=1;el.addEventListener('click',tiklama)}});
@@ -1243,6 +1260,36 @@ setInterval(async()=>{
 
 /* ---------- arkadaşlar, profil fotoğrafı, şampiyonlar ---------- */
 let ARK=null,AVV=Date.now(),SAMP=null,sampZaman=0,sampYukleniyor=false;
+// Uygulama değerlendirmelerinin özeti (sayı, ortalama, yıldız dağılımı).
+let DEG=null,degZaman=0,degYukleniyor=false;
+async function degerlendirmeGetir(){
+ if(!SUNUCU||degYukleniyor||Date.now()-degZaman<60000)return;
+ degYukleniyor=true;
+ try{const r=await fetch('api/sosyal?islem=degerlendirmeler');if(r.ok)DEG=await r.json()}catch(e){}
+ degYukleniyor=false;degZaman=Date.now();
+ if(tab==='home'||(tab==='me'&&ptab==='ayar'))render();
+}
+async function degerlendirmeGonder(){
+ if(!SUNUCU||!S.rating)return;
+ const r=await postJSON('api/sosyal',{islem:'degerlendir',yildiz:S.rating.stars,metin:S.rating.text||''});
+ if(r.err){toast(r.err,'star');return}
+ DEG=r;degZaman=Date.now();render();
+}
+function yildizSirasi(ort,boy){
+ const yol=ic('star',boy);
+ return `<span class="yildizlar" aria-hidden="true" style="--boy:${boy}px"><span class="bos">${yol.repeat(5)}</span><span class="dolu" style="width:${Math.round(ort/5*100)}%">${yol.repeat(5)}</span></span>`;
+}
+function degerlendirmeHTML(tam){
+ if(!SUNUCU)return '';
+ degerlendirmeGetir();
+ if(!DEG)return `<p class="small muted" style="font-weight:700">Değerlendirmeler yükleniyor…</p>`;
+ if(!DEG.sayi)return `<p class="small muted" style="font-weight:700;flex:1">Henüz değerlendirme yok. İlk değerlendiren sen ol!</p>`;
+ const ort=DEG.ortalama.toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1});
+ const ozet=`<div class="deg-ozet" aria-label="5 üzerinden ${ort} yıldız, ${DEG.sayi} değerlendirme"><b class="deg-ort">${ort}</b><div>${yildizSirasi(DEG.ortalama,tam?22:18)}<span class="small muted" style="display:block;font-weight:800">${DEG.sayi.toLocaleString('tr-TR')} değerlendirme</span></div></div>`;
+ if(!tam)return ozet;
+ const enCok=Math.max(...DEG.dagilim,1);
+ return ozet+`<div class="deg-dagilim">${[5,4,3,2,1].map(y=>`<span>${y} ${ic('star',13)}</span><div class="bar"><i style="width:${Math.round(DEG.dagilim[y-1]/enCok*100)}%;background:var(--sun)"></i></div><span>${DEG.dagilim[y-1]}</span>`).join('')}</div>`;
+}
 async function arkadaslariGetir(yenidenCiz){
  if(!SUNUCU)return;
  try{const r=await fetch('api/sosyal?islem=arkadaslar');ARK=r.ok?await r.json():{arkadaslar:[],istekler:[],giden:[]}}catch(e){ARK={arkadaslar:[],istekler:[],giden:[]}}
@@ -1396,7 +1443,8 @@ function tiklama(e){
  if(a==='buy'){const it=SHOP.find(x=>x.id===v);if(S.owned.includes(v)){S.eq[it.c]=S.eq[it.c]===v&&it.c!=='bg'?null:v;commit();return}
   if(S.points<it.p){toast(`${it.p-S.points} puan daha lazım`,'leaf');return}S.points-=it.p;S.owned.push(v);S.eq[it.c]=v;toast(`${it.n} alındı ve takıldı`,'shop');konfeti(60);commit();return}
  if(a==='star'){S.rating={...(S.rating||{}),stars:+v,text:$('#rtext')?.value||'',sent:false};save();render();return}
- if(a==='rate'){S.rating={...S.rating,text:$('#rtext')?.value||'',sent:true};commit();toast('Geri bildirimin alındı, teşekkürler!','star');return}
+ if(a==='rate'){S.rating={...S.rating,text:$('#rtext')?.value||'',sent:true};degerlendirmeGonder();commit();toast('Geri bildirimin alındı, teşekkürler!','star');return}
+ if(a==='deggit'){tab='me';ptab='ayar';render();setTimeout(()=>$('#degPanel')?.scrollIntoView({behavior:'smooth',block:'start'}),50);return}
  if(a==='rerate'){S.rating.sent=false;save();render();return}
  if(a==='chat'){openChat();return}
  if(a==='ask'){ask(v);return}

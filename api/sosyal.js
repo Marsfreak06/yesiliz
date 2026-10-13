@@ -2,6 +2,8 @@
 //   GET  /api/sosyal?avatar=<kullanıcı adı>        → JPEG (yoksa 404)
 //   GET  /api/sosyal?islem=sampiyonlar              → bu haftanın ve geçen haftanın sıralamaları
 //   GET  /api/sosyal?islem=arkadaslar               → { arkadaslar, istekler, giden }
+//   GET  /api/sosyal?islem=degerlendirmeler         → { sayi, ortalama, dagilim[1..5 yıldız] }
+//   POST /api/sosyal { islem: 'degerlendir', yildiz, metin }
 //   POST /api/sosyal { islem: 'istek' | 'kabul' | 'reddet' | 'cikar', ad }
 //   POST /api/sosyal { islem: 'avatar', resim } | { islem: 'avatarSil' }
 import { dbVar, redis, oturumBilgi, jsonOku, ciftler, govdeAl, cevap, haftaNo, kullaniciAnahtari, adlariGetir } from './_db.js';
@@ -34,6 +36,16 @@ async function siralama(hafta, ben) {
   return sonuc;
 }
 
+// Uygulama değerlendirmeleri: kişi başı bir kayıt; yorumlar herkese açık değildir, yalnızca özet döner.
+async function degerlendirmeOzeti() {
+  const kayitlar = ciftler(await redis('HGETALL', 'degerlendirmeler')).map(([, v]) => jsonOku(v)).filter(Boolean);
+  const dagilim = [0, 0, 0, 0, 0];
+  for (const k of kayitlar) if (k.yildiz >= 1 && k.yildiz <= 5) dagilim[k.yildiz - 1]++;
+  const sayi = dagilim.reduce((a, b) => a + b, 0);
+  const ortalama = sayi ? Math.round(dagilim.reduce((a, n, i) => a + n * (i + 1), 0) / sayi * 10) / 10 : 0;
+  return { sayi, ortalama, dagilim };
+}
+
 async function arkadasListesi(anahtar) {
   const [ark, ist, gid] = await Promise.all([
     redis('SMEMBERS', 'arkadas:' + anahtar), redis('SMEMBERS', 'istekler:' + anahtar), redis('SMEMBERS', 'giden:' + anahtar),
@@ -58,6 +70,7 @@ export default async function handler(req, res) {
         res.setHeader('Cache-Control', 'private, max-age=60');
         return res.status(200).end(Buffer.from(m[1], 'base64'));
       }
+      if (q.islem === 'degerlendirmeler') return cevap(res, 200, await degerlendirmeOzeti());
       const ben = await oturumBilgi(req);
       if (q.islem === 'sampiyonlar') {
         const h = haftaNo();
@@ -84,6 +97,13 @@ export default async function handler(req, res) {
       if (resim.length > AVATAR_UST) return cevap(res, 413, { hata: 'Fotoğraf çok büyük' });
       await redis('SET', 'avatar:' + me, resim);
       return cevap(res, 200, { tamam: true });
+    }
+    if (g.islem === 'degerlendir') {
+      const yildiz = Math.round(Number(g.yildiz));
+      if (!(yildiz >= 1 && yildiz <= 5)) return cevap(res, 400, { hata: '1 ile 5 arasında yıldız seç' });
+      const metin = String(g.metin || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 500);
+      await redis('HSET', 'degerlendirmeler', me, JSON.stringify({ yildiz, metin, ad: ben.ad, t: Date.now() }));
+      return cevap(res, 200, await degerlendirmeOzeti());
     }
     if (g.islem === 'avatarSil') {
       await redis('DEL', 'avatar:' + me);
